@@ -1,25 +1,129 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate
+} from "react-router-dom";
 
-export default function Sidebar({ children }) {
+import {
+  useState,
+  useEffect
+} from "react";
+
+export default function Sidebar({
+  children
+}) {
+
   const navigate = useNavigate();
+
   const location = useLocation();
 
+  const [sidebarOpen, setSidebarOpen] =
+    useState(
+      window.innerWidth > 768
+    );
+
+  // =====================================
+  // RESPONSIVE
+  // =====================================
+
+  useEffect(() => {
+
+    const handleResize = () => {
+
+      if (
+        window.innerWidth <= 768
+      ) {
+
+        setSidebarOpen(false);
+
+      } else {
+
+        setSidebarOpen(true);
+      }
+    };
+
+    window.addEventListener(
+      "resize",
+      handleResize
+    );
+
+    return () =>
+      window.removeEventListener(
+        "resize",
+        handleResize
+      );
+
+  }, []);
+
+  // =====================================
+  // LOGOUT
+  // =====================================
+
   const handleLogout = () => {
-    localStorage.removeItem("access");
+
+    localStorage.removeItem(
+      "access"
+    );
+
     navigate("/");
   };
 
-  const isActive = (path) => location.pathname === path;
+  // =====================================
+  // ACTIVE ROUTE
+  // =====================================
+
+  const isActive = (path) => {
+
+    return location.pathname.startsWith(
+      path
+    );
+  };
 
   return (
+
     <div style={styles.layout}>
-      {/* FULL WIDTH NAVBAR */}
+
+      {/* =====================================
+          TOPBAR
+      ===================================== */}
+
       <div style={styles.topbar}>
-        <div style={styles.logoSection}>
-          <h2 style={styles.logoText}>My Flying Colours</h2>
+
+        {/* LEFT */}
+
+        <div
+          style={{
+            ...styles.logoSection,
+
+            width: sidebarOpen
+              ? "250px"
+              : "72px",
+          }}
+        >
+
+          <button
+            onClick={() =>
+              setSidebarOpen(
+                !sidebarOpen
+              )
+            }
+            style={styles.menuButton}
+          >
+            ☰
+          </button>
+
+          {sidebarOpen && (
+
+            <h2 style={styles.logoText}>
+              My Flying Colours
+            </h2>
+
+          )}
+
         </div>
 
-        {/* NEW: VEDIC MATH / ABACUS ART SECTION */}
+        {/* CENTER */}
+
         <div style={styles.artSection}>
           {/* Simple Abacus Icon Design */}
           <div style={styles.abacusIcon}>
@@ -36,190 +140,489 @@ export default function Sidebar({ children }) {
             <div style={styles.innerCircle}></div>
           </div>
         </div>
-        
-        <div style={styles.adminSection}>
-          <span style={styles.adminUser}>Admin User</span>
-        </div>
+
+        {/* RIGHT */}
+
+        {/* <div style={styles.userSection}>
+
+          <span style={styles.userText}>
+            Admin User
+          </span>
+
+        </div> */}
+
       </div>
 
-      <div style={styles.wrapper}>
-        <div style={styles.sidebar}>
-          <div style={styles.menu}>
-            <Link to="/dashboard" style={isActive("/dashboard") ? styles.active : styles.link}>Dashboard </Link>
-            <Link to="/staff"  style={isActive("/staff") ? styles.active : styles.link}> Staff</Link>
-            
-           <Link to="/schools" style={isActive("/schools") ? styles.active : styles.link} >  Schools </Link>
-          <Link to="/allstudents" style={isActive("/allstudents")  ? styles.active  : styles.link }> Students</Link>
-            <Link to="/courses" style={isActive("/courses") ? styles.active : styles.link} > Courses </Link>
-            <Link to="/products" style={   isActive("/products")    ? styles.active   : styles.link  }> Products</Link>
-            <Link to="/inventory" style={isActive("/inventory")     ? styles.active   : styles.link  }> Inventory</Link>
-            <p style={styles.link}>Reports</p>
+      {/* =====================================
+          BODY
+      ===================================== */}
 
-            <button onClick={handleLogout} style={styles.logout}>Logout</button>
+      <div style={styles.body}>
+
+        {/* =====================================
+            SIDEBAR
+        ===================================== */}
+
+        <div
+          style={{
+            ...styles.sidebar,
+
+            width: sidebarOpen
+              ? "250px"
+              : "72px",
+          }}
+        >
+
+          <div style={styles.menu}>
+
+            {/* DASHBOARD */}
+
+            <Link
+              to="/dashboard"
+              style={
+                sidebarOpen
+                  ? (
+                      isActive(
+                        "/dashboard"
+                      )
+                        ? styles.activeLink
+                        : styles.link
+                    )
+                  : styles.link
+              }
+            >
+              {sidebarOpen &&
+                "Dashboard"}
+            </Link>
+
+            {/* STAFF */}
+
+            <Link
+              to="/staff"
+              style={
+                sidebarOpen
+                  ? (
+                      isActive(
+                        "/staff"
+                      )
+                        ? styles.activeLink
+                        : styles.link
+                    )
+                  : styles.link
+              }
+            >
+              {sidebarOpen &&
+                "Staff"}
+            </Link>
+
+            {/* SCHOOLS */}
+
+            <Link
+              to="/schools"
+              style={
+                sidebarOpen
+                  ? (
+                      isActive(
+                        "/schools"
+                      )
+                        ? styles.activeLink
+                        : styles.link
+                    )
+                  : styles.link
+              }
+            >
+              {sidebarOpen &&
+                "Schools"}
+            </Link>
+
+            {/* STUDENTS */}
+
+            <Link
+              to="/allstudents"
+              style={
+                sidebarOpen
+                  ? (
+                      isActive(
+                        "/allstudents"
+                      )
+                        ? styles.activeLink
+                        : styles.link
+                    )
+                  : styles.link
+              }
+            >
+              {sidebarOpen &&
+                "Students"}
+            </Link>
+
+            {/* COURSES */}
+
+            <Link
+              to="/courses"
+              style={
+                sidebarOpen
+                  ? (
+                      isActive(
+                        "/courses"
+                      )
+                        ? styles.activeLink
+                        : styles.link
+                    )
+                  : styles.link
+              }
+            >
+              {sidebarOpen &&
+                "Courses"}
+            </Link>
+
+            {/* PRODUCTS */}
+
+            <Link
+              to="/products"
+              style={
+                sidebarOpen
+                  ? (
+                      isActive(
+                        "/products"
+                      )
+                        ? styles.activeLink
+                        : styles.link
+                    )
+                  : styles.link
+              }
+            >
+              {sidebarOpen &&
+                "Products"}
+            </Link>
+
+            {/* INVENTORY */}
+
+            <Link
+              to="/inventory"
+              style={
+                sidebarOpen
+                  ? (
+                      isActive(
+                        "/inventory"
+                      )
+                        ? styles.activeLink
+                        : styles.link
+                    )
+                  : styles.link
+              }
+            >
+              {sidebarOpen &&
+                "Inventory"}
+            </Link>
+
+            {/* REPORTS */}
+
+            <Link
+              to="/reports"
+              style={
+                sidebarOpen
+                  ? (
+                      isActive(
+                        "/reports"
+                      )
+                        ? styles.activeLink
+                        : styles.link
+                    )
+                  : styles.link
+              }
+            >
+              {sidebarOpen &&
+                "Reports"}
+            </Link>
+
           </div>
+
+          {/* =====================================
+              LOGOUT
+          ===================================== */}
+
+          {sidebarOpen && (
+
+            <button
+              onClick={
+                handleLogout
+              }
+              style={styles.logout}
+            >
+              Logout
+            </button>
+
+          )}
+
         </div>
+
+        {/* =====================================
+            PAGE CONTENT
+        ===================================== */}
 
         <div style={styles.content}>
+
           {children}
+
         </div>
+
       </div>
+
     </div>
   );
 }
 
 const styles = {
-  layout: {
-    display: "flex",
-    flexDirection: "column",
-    height: "100vh",
-    width: "100%",
-  },
-  topbar: {
-    height: "65px",
-    background: "#ffffff",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 0,
-    boxShadow: "0 2px 4px rgba(0,0,0,0.05)", 
-    borderBottom: "1px solid #edf2f7",
-    zIndex: 100,
-  },
-  logoSection: {
-    width: "250px", 
-    height: "100%",
-    display: "flex",
-    alignItems: "center",
-    paddingLeft: "20px",
-    background: "#1E1E2D", 
-  },
-  logoText: {
-    margin: 0,
-    fontSize: "1.1rem",
-    fontWeight: "700",
-    color: "#ffffff",
-    letterSpacing: "0.5px",
-  },
 
   /* NEW ART STYLES */
-  artSection: {
-    flex: 1,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "15px",
-    opacity: 0.6, // Keeps it subtle so it doesn't distract from data
-  },
-  artText: {
-    fontSize: "0.85rem",
-    fontWeight: "600",
-    color: "#6080E8",
-    textTransform: "uppercase",
-    letterSpacing: "2px",
-  },
-  abacusIcon: {
-    width: "14px",
-    height: "22px",
-    border: "2px solid #6080E8",
-    borderRadius: "2px",
-    position: "relative",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "space-around"
-  },
-  abacusWire: {
-    position: "absolute",
-    width: "2px",
-    height: "100%",
-    background: "#6080E8",
-  },
-  bead: {
-    width: "8px",
-    height: "4px",
-    background: "#6080E8",
-    borderRadius: "1px",
-    zIndex: 1,
-  },
-  vedicSymbol: {
-    width: "20px",
-    height: "20px",
-    border: "1px solid #6080E8",
-    borderRadius: "50%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transform: "rotate(45deg)"
-  },
-  innerCircle: {
-    width: "10px",
-    height: "10px",
-    border: "1px solid #6080E8",
+artSection: {
+  flex: 1,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: window.innerWidth <= 768 ? "8px" : "15px",
+  opacity: 0.7,
+  padding: "0 10px",
+  overflow: "hidden",
+},
+
+artText: {
+  fontSize: window.innerWidth <= 768 ? "0.55rem" : "0.85rem",
+  fontWeight: "600",
+  color: "#6080E8",
+  textTransform: "uppercase",
+  letterSpacing: window.innerWidth <= 768 ? "1px" : "2px",
+  whiteSpace: "nowrap",
+},
+
+abacusIcon: {
+  width: window.innerWidth <= 768 ? "10px" : "14px",
+  height: window.innerWidth <= 768 ? "16px" : "22px",
+  border: "2px solid #6080E8",
+  borderRadius: "2px",
+  position: "relative",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "space-around",
+  flexShrink: 0,
+},
+
+abacusWire: {
+  position: "absolute",
+  width: "2px",
+  height: "100%",
+  background: "#6080E8",
+},
+
+bead: {
+  width: window.innerWidth <= 768 ? "5px" : "8px",
+  height: window.innerWidth <= 768 ? "3px" : "4px",
+  background: "#6080E8",
+  borderRadius: "1px",
+  zIndex: 1,
+},
+
+vedicSymbol: {
+  width: window.innerWidth <= 768 ? "14px" : "20px",
+  height: window.innerWidth <= 768 ? "14px" : "20px",
+  border: "1px solid #6080E8",
+  borderRadius: "50%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  transform: "rotate(45deg)",
+  flexShrink: 0,
+},
+
+innerCircle: {
+  width: window.innerWidth <= 768 ? "6px" : "10px",
+  height: window.innerWidth <= 768 ? "6px" : "10px",
+  border: "1px solid #6080E8",
+},
+
+  // =====================================
+  // LAYOUT
+  // =====================================
+
+  layout: {
+    width: "100%",
+    height: "100vh",
+    overflow: "hidden",
+    background: "#f5f7fb",
   },
 
-  adminSection: {
-    paddingRight: "30px",
+  body: {
+    display: "flex",
+    height:
+      "calc(100vh - 72px)",
+  },
+
+  // =====================================
+  // TOPBAR
+  // =====================================
+
+  topbar: {
+  height: window.innerWidth <= 768 ? "60px" : "72px",
+  background: "#ffffff",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  borderBottom: "1px solid #e5e7eb",
+  boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
+  position: "sticky",
+  top: 0,
+  zIndex: 999,
+},
+
+  logoSection: {
+    height: "100%",
+    background: "#1E1E2D",
     display: "flex",
     alignItems: "center",
-  },
-  adminUser: {
-    fontWeight: "500",
-    color: "#4A5568",
-    fontSize: "0.95rem",
-  },
-  wrapper: {
-    display: "flex",
-    flex: 1,
+    gap: "15px",
+    padding: "0 20px",
+    transition:
+      "all 0.3s ease",
     overflow: "hidden",
+    flexShrink: 0,
   },
+
+ menuButton: {
+  background: "transparent",
+  border: "none",
+  color: "#ffffff",
+  fontSize: window.innerWidth <= 768 ? "22px" : "26px",
+  cursor: "pointer",
+  minWidth: "30px",
+},
+
+  logoText: {
+  color: "#ffffff",
+  fontSize: "1.2rem",
+  fontWeight: "750",
+  letterSpacing: "0.5px",
+  whiteSpace: "nowrap",
+},
+
+  centerSection: {
+    flex: 1,
+    display: "flex",
+    justifyContent:
+      "center",
+  },
+
+  centerText: {
+    color: "#8b9df5",
+    fontWeight: "700",
+    letterSpacing: "2px",
+    fontSize: "0.9rem",
+  },
+
+  userSection: {
+    paddingRight: "25px",
+  },
+
+  userText: {
+    color: "#4b5563",
+    fontWeight: "600",
+  },
+
+  // =====================================
+  // SIDEBAR
+  // =====================================
+
   sidebar: {
-    width: "250px",
     background: "#1E1E2D",
-    padding: "20px",
+    transition:
+      "all 0.3s ease",
     display: "flex",
     flexDirection: "column",
-    boxShadow: "2px 0 10px rgba(0,0,0,0.02)", 
+    justifyContent:
+      "space-between",
+    overflow: "hidden",
+    borderRight:
+      "1px solid rgba(255,255,255,0.05)",
   },
+
   menu: {
     display: "flex",
     flexDirection: "column",
     gap: "10px",
+    padding: "20px 15px",
   },
+
   link: {
+    color:
+      "rgba(255,255,255,0.75)",
+
     textDecoration: "none",
-    color: "rgba(255, 255, 255, 0.7)",
-    padding: "12px 15px",
-    borderRadius: "8px",
-    display: "block",
-    cursor: "pointer",
-    fontSize: "0.9rem",
-    transition: "0.2s ease",
+
+    padding: "14px 18px",
+
+    borderRadius: "12px",
+
+    fontWeight: "500",
+
+    display: "flex",
+
+    alignItems: "center",
+
+    minHeight: "50px",
+
+    transition:
+      "all 0.2s ease",
+
+    whiteSpace: "nowrap",
   },
-  active: {
-    background: "#6080E8",
-    padding: "12px 15px",
-    borderRadius: "8px",
-    color: "#fff",
+
+  activeLink: {
+    background:
+      "linear-gradient(135deg,#6080E8,#7C94F2)",
+
+    color: "#ffffff",
+
     textDecoration: "none",
-    display: "block",
-    fontWeight: "600",
-    fontSize: "0.9rem",
+
+    padding: "14px 18px",
+
+    borderRadius: "12px",
+
+    fontWeight: "700",
+
+    display: "flex",
+
+    alignItems: "center",
+
+    minHeight: "50px",
+
+    whiteSpace: "nowrap",
+
+    boxShadow:
+      "0 8px 18px rgba(96,128,232,0.35)",
   },
+
   logout: {
-    marginTop: "30px",
-    padding: "12px",
-    background: "#ef4444", 
-    color: "#fff",
+    margin: "20px",
+    background:
+      "linear-gradient(135deg,#ef4444,#dc2626)",
+    color: "#ffffff",
     border: "none",
-    borderRadius: "8px",
+    padding: "14px",
+    borderRadius: "12px",
     cursor: "pointer",
-    fontWeight: "600",
-    fontSize: "0.9rem",
+    fontWeight: "700",
+    fontSize: "15px",
   },
+
+  // =====================================
+  // CONTENT
+  // =====================================
+
   content: {
     flex: 1,
-    padding: "30px",
-    background: "#F8FAFC",
     overflowY: "auto",
+    padding: "25px",
+    background: "#f5f7fb",
   },
 };

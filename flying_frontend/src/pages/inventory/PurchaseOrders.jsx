@@ -1,305 +1,156 @@
 import { useEffect, useState } from "react";
-
-import { useNavigate } from "react-router-dom";
-
 import API from "../../api";
+import AddPO from "./AddPO";
 
 export default function PurchaseOrders() {
-
-  const navigate = useNavigate();
-
-  const [purchaseOrders, setPurchaseOrders] =
-    useState([]);
+  const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [targetPOId, setTargetPOId] = useState(null);
 
   useEffect(() => {
-
     fetchPOs();
-
   }, []);
 
   const fetchPOs = async () => {
-
     try {
-
-      const res = await API.get(
-        "/inventory/po/"
-      );
-
+      const res = await API.get("/inventory/po/");
       setPurchaseOrders(res.data);
-
     } catch (err) {
-
       console.log(err);
     }
   };
 
+  const handleOpenAddModal = () => {
+    setTargetPOId(null);
+    setModalOpen(true);
+  };
+
+  const handleOpenEditModal = (id) => {
+    setTargetPOId(id);
+    setModalOpen(true);
+  };
+
+  const handleModalSuccess = () => {
+    setModalOpen(false);
+    setTargetPOId(null);
+    fetchPOs();
+  };
+
   const deletePO = async (id) => {
-
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this PO?"
-    );
-
+    const confirmDelete = window.confirm("Are you sure you want to delete this PO?");
     if (!confirmDelete) return;
 
     try {
-
-      await API.delete(
-        `/inventory/po/delete/${id}/`
-      );
-
+      await API.delete(`/inventory/po/delete/${id}/`);
       alert("PO Deleted");
-
       fetchPOs();
-
     } catch (err) {
-
       console.log(err);
     }
   };
 
   return (
-
     <div>
-
-      {/* HEADER */}
-      <div
-        style={styles.header}
-      >
-
-        <div>
-
-          <h2 style={styles.title}>
-            Purchase Orders
-          </h2>
-
-          <p style={styles.subtitle}>
-            Manage all purchase orders
-          </p>
-
+      {/* HEADER WITH PRO BAR DESIGN */}
+      <div style={styles.header}>
+        <div style={styles.titleSection}>
+          <div style={styles.headingWrapper}>
+            <div style={styles.verticalLine}></div>
+            <h2 style={styles.title}>Purchase Orders</h2>
+          </div>
+          <p style={styles.subtitle}>Track procurement requests and outbound supply cycles.</p>
         </div>
 
-        <button
-          onClick={() =>
-            navigate("/po/add")
-          }
-          style={styles.addButton}
-        >
+        <button onClick={handleOpenAddModal} style={styles.primaryButton}>
           + Add PO
         </button>
-
       </div>
 
-      {/* TABLE */}
-      <div style={styles.card}>
-
-        <table style={styles.table}>
-
-          <thead>
-
-            <tr>
-
-              <th style={styles.th}>
-                PO Number
-              </th>
-
-              <th style={styles.th}>
-                Vendor
-              </th>
-
-              <th style={styles.th}>
-                PO Date
-              </th>
-
-              <th style={styles.th}>
-                Delivery Date
-              </th>
-
-              <th style={styles.th}>
-                Grand Total
-              </th>
-
-              <th style={styles.th}>
-                Actions
-              </th>
-
-            </tr>
-
-          </thead>
-
-          <tbody>
-
-            {purchaseOrders.length > 0 ? (
-
-              purchaseOrders.map((po) => (
-
-                <tr key={po.id}>
-
-                  <td style={styles.td}>
+      {/* HORIZONTAL SCROLL ENHANCED TABLE */}
+      <div style={styles.tableWrapper}>
+        {purchaseOrders.length > 0 ? (
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>PO Number</th>
+                <th style={styles.th}>Vendor</th>
+                <th style={styles.th}>PO Date</th>
+                <th style={styles.th}>Delivery Date</th>
+                <th style={styles.th}>Grand Total</th>
+                <th style={{ ...styles.th, textAlign: "center" }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {purchaseOrders.map((po) => (
+                <tr key={po.id} style={styles.tr}>
+                  <td style={{ ...styles.td, fontWeight: "600", color: "#6080E8", fontFamily: "monospace" }}>
                     {po.po_number}
                   </td>
-
-                  <td style={styles.td}>
-                    {po.vendor_name}
+                  <td style={{ ...styles.td, fontWeight: "500", color: "#1e293b" }}>{po.vendor_name}</td>
+                  <td style={styles.td}>{po.po_date}</td>
+                  <td style={styles.td}>{po.delivery_date}</td>
+                  <td style={{ ...styles.td, fontWeight: "600", color: "#0f172a" }}>
+                    ₹ {Number(po.grand_total || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </td>
-
                   <td style={styles.td}>
-                    {po.po_date}
-                  </td>
-
-                  <td style={styles.td}>
-                    {po.delivery_date}
-                  </td>
-
-                  <td style={styles.td}>
-                    ₹ {po.grand_total}
-                  </td>
-
-                  <td style={styles.td}>
-
-                    <div
-                      style={styles.actionContainer}
-                    >
-
-                      <button
-                        style={styles.editButton}
-                        onClick={() =>
-                          navigate(
-                            `/po/edit/${po.id}`
-                          )
-                        }
-                      >
+                    <div style={styles.actionButtonGroup}>
+                      <button style={styles.editBtn} onClick={() => handleOpenEditModal(po.id)}>
                         Edit
                       </button>
-
-                      <button
-                        style={styles.deleteButton}
-                        onClick={() =>
-                          deletePO(po.id)
-                        }
-                      >
+                      <button style={styles.deleteBtn} onClick={() => deletePO(po.id)}>
                         Delete
                       </button>
-
                     </div>
-
                   </td>
-
                 </tr>
-
-              ))
-
-            ) : (
-
-              <tr>
-
-                <td
-                  colSpan="6"
-                  style={styles.empty}
-                >
-                  No Purchase Orders Found
-                </td>
-
-              </tr>
-
-            )}
-
-          </tbody>
-
-        </table>
-
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div style={styles.emptyState}>
+            <p>No managed procurement orders found in this registry index block.</p>
+          </div>
+        )}
       </div>
 
+      {/* POPUP CONFIG OVERLAY */}
+      <AddPO isOpen={modalOpen} id={targetPOId} onClose={() => setModalOpen(false)} onSuccess={handleModalSuccess} />
     </div>
   );
 }
 
 const styles = {
-
   header: {
     display: "flex",
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: "20px",
+    gap: "12px",
+    flexWrap: "wrap",
   },
-
-  title: {
-    margin: 0,
-    fontSize: "28px",
-    color: "#111827",
+  titleSection: { display: "flex", flexDirection: "column", gap: "4px" },
+  headingWrapper: { display: "flex", alignItems: "center", gap: "10px" },
+  verticalLine: { width: "4px", height: "24px", backgroundColor: "#6080E8", borderRadius: "2px", flexShrink: 0 },
+  title: { fontSize: "22px", fontWeight: "700", color: "#1e293b", margin: 0, lineHeight: "1.2" },
+  subtitle: { fontSize: "13px", color: "#64748b", margin: 0, paddingLeft: "14px" },
+  primaryButton: {
+    background: "#6080E8", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "6px",
+    cursor: "pointer", fontWeight: "600", fontSize: "13px", whiteSpace: "nowrap", boxShadow: "0 2px 4px rgba(96, 128, 232, 0.15)",
   },
-
-  subtitle: {
-    marginTop: "5px",
-    color: "#6b7280",
+  tableWrapper: {
+    width: "100%", background: "#fff", borderRadius: "12px", border: "1px solid #e2e8f0",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.02)", overflowX: "auto", WebkitOverflowScrolling: "touch",
   },
-
-  addButton: {
-    background: "#4f46e5",
-    color: "#fff",
-    border: "none",
-    padding: "12px 18px",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: "600",
-  },
-
-  card: {
-    background: "#fff",
-    borderRadius: "12px",
-    padding: "20px",
-    boxShadow:
-      "0 2px 10px rgba(0,0,0,0.05)",
-  },
-
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-  },
-
+  table: { width: "100%", borderCollapse: "collapse", minWidth: "800px" },
   th: {
-    textAlign: "left",
-    padding: "14px",
-    borderBottom:
-      "1px solid #e5e7eb",
-    color: "#374151",
-    fontSize: "14px",
+    background: "#f8fafc", padding: "14px 20px", textAlign: "left", fontSize: "11px", fontWeight: "600",
+    color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #e2e8f0", whiteSpace: "nowrap",
   },
-
-  td: {
-    padding: "14px",
-    borderBottom:
-      "1px solid #f3f4f6",
-    fontSize: "14px",
-  },
-
-  actionContainer: {
-    display: "flex",
-    gap: "10px",
-  },
-
-  editButton: {
-    background: "#3b82f6",
-    color: "#fff",
-    border: "none",
-    padding: "8px 14px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "12px",
-  },
-
-  deleteButton: {
-    background: "#ef4444",
-    color: "#fff",
-    border: "none",
-    padding: "8px 14px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "12px",
-  },
-
-  empty: {
-    textAlign: "center",
-    padding: "40px",
-    color: "#9ca3af",
-  },
+  tr: { borderBottom: "1px solid #f1f5f9" },
+  td: { padding: "12px 20px", fontSize: "14px", color: "#334155", whiteSpace: "nowrap", verticalAlign: "middle" },
+  actionButtonGroup: { display: "flex", gap: "6px", alignItems: "center", justifyContent: "center" },
+  editBtn: { background: "#fff", color: "#6080E8", border: "1px solid #6080E8", padding: "5px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "12px" },
+  deleteBtn: { background: "#ef4444", color: "#fff", border: "none", padding: "5px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "12px" },
+  emptyState: { padding: "60px 20px", textAlign: "center", color: "#64748b" },
 };

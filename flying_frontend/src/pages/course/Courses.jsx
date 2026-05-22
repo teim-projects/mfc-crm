@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import API from "../../api";
 import Sidebar from "../../components/Sidebar";
+import AddCourse from "./AddCourse";
 
 export default function Courses() {
-
   const [courses, setCourses] = useState([]);
-  const navigate = useNavigate();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [targetCourseId, setTargetCourseId] = useState(null);
 
   useEffect(() => {
     fetchCourses();
@@ -14,31 +14,39 @@ export default function Courses() {
 
   const fetchCourses = async () => {
     try {
-
       const res = await API.get("/info/courses/");
       setCourses(res.data);
-
     } catch (err) {
       console.log(err);
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleOpenAddModal = () => {
+    setTargetCourseId(null);
+    setModalOpen(true);
+  };
 
+  const handleOpenEditModal = (id) => {
+    setTargetCourseId(id);
+    setModalOpen(true);
+  };
+
+  const handleModalSuccess = () => {
+    setModalOpen(false);
+    setTargetCourseId(null);
+    fetchCourses();
+  };
+
+  const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this course?"
     );
-
     if (!confirmDelete) return;
 
     try {
-
       await API.delete(`/info/courses/delete/${id}/`);
-
       alert("Course Deleted");
-
       fetchCourses();
-
     } catch (err) {
       console.log(err);
     }
@@ -46,167 +54,239 @@ export default function Courses() {
 
   return (
     <Sidebar>
+      <div style={styles.container}>
+        {/* HEADER SECTION */}
+        <div style={styles.header}>
+          <div style={styles.titleSection}>
+            <div style={styles.headingWrapper}>
+              <div style={styles.verticalLine}></div>
+              <h2 style={styles.title}>Courses Catalogue</h2>
+            </div>
+            <p style={styles.subtitle}>
+              Manage all specialized Vedic Maths & Abacus syllabus levels and dynamic pricing tiers.
+            </p>
+          </div>
 
-      {/* HEADER */}
-      <div style={styles.header}>
-
-        <div>
-          <h2 style={styles.title}>Courses</h2>
-          <p style={styles.subtitle}>
-            Manage all Vedic Maths & Abacus courses
-          </p>
+          <button style={styles.primaryButton} onClick={handleOpenAddModal}>
+            + Add Course
+          </button>
         </div>
 
-        <button
-          style={styles.button}
-          onClick={() => navigate("/courses/add")}
-        >
-          + Add Course
-        </button>
-
+        {/* DATA CONTAINER WITH STABLE HORIZONTAL SCROLLER */}
+        <div style={styles.tableWrapper}>
+          {courses.length > 0 ? (
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>Course Type</th>
+                  <th style={styles.th}>Academic Level</th>
+                  <th style={styles.th}>Tuition Base Fees</th>
+                  <th style={styles.th}>Track Duration</th>
+                  <th style={{ ...styles.th, textAlign: "center" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {courses.map((course) => (
+                  <tr key={course.id} style={styles.tr}>
+                    <td style={{ ...styles.td, fontWeight: "600", color: "#1e293b" }}>
+                      <span
+                        style={{
+                          ...styles.typeTag,
+                          background: course.course_type === "vedic_maths" ? "#f0f4ff" : "#fef3c7",
+                          color: course.course_type === "vedic_maths" ? "#6080E8" : "#d97706",
+                        }}
+                      >
+                        {course.course_type === "vedic_maths" ? "Vedic Maths" : "Abacus"}
+                      </span>
+                    </td>
+                    <td style={{ ...styles.td, fontWeight: "600", color: "#475569" }}>
+                      {course.level}
+                    </td>
+                    <td style={styles.td}>
+                      <span style={styles.feeBadge}>
+                        ₹ {Number(course.tuition_fees || 0).toLocaleString("en-IN")}
+                      </span>
+                    </td>
+                    <td style={{ ...styles.td, color: "#64748b", fontWeight: "500" }}>
+                      {course.duration || "—"}
+                    </td>
+                    <td style={styles.td}>
+                      <div style={styles.actionButtonGroup}>
+                        <button
+                          style={styles.editBtn}
+                          onClick={() => handleOpenEditModal(course.id)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          style={styles.deleteBtn}
+                          onClick={() => handleDelete(course.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div style={styles.emptyState}>
+              <p>No program tracks are found registered within this cluster interface matrix yet.</p>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* TABLE */}
-      <div style={styles.card}>
-
-        <table style={styles.table}>
-
-          <thead>
-            <tr>
-              <th style={styles.th}>Course Type</th>
-              <th style={styles.th}>Level</th>
-              <th style={styles.th}>tuition_Fees</th>
-              <th style={styles.th}>Duration</th>
-              <th style={styles.th}>Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-
-            {courses.map((course) => (
-
-              <tr key={course.id}>
-
-                <td style={styles.td}>
-                  {course.course_type === "vedic_maths"
-                    ? "Vedic Maths"
-                    : "Abacus"}
-                </td>
-
-                <td style={styles.td}>{course.level}</td>
-
-                <td style={styles.td}>
-                  ₹ {course.tuition_fees}
-                </td>
-
-                <td style={styles.td}>
-                  {course.duration}
-                </td>
-
-                <td style={styles.td}>
-
-                  <button
-                    style={styles.editBtn}
-                    onClick={() =>
-                      navigate(`/courses/edit/${course.id}`)
-                    }
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    style={styles.deleteBtn}
-                    onClick={() => handleDelete(course.id)}
-                  >
-                    Delete
-                  </button>
-
-                </td>
-
-              </tr>
-
-            ))}
-
-          </tbody>
-
-        </table>
-
-      </div>
-
+      {/* REUSABLE OVERLAY DATA POPUP HOOK */}
+      <AddCourse
+        isOpen={modalOpen}
+        id={targetCourseId}
+        onClose={() => setModalOpen(false)}
+        onSuccess={handleModalSuccess}
+      />
     </Sidebar>
   );
 }
 
 const styles = {
-
+  container: {
+    width: "100%",
+    boxSizing: "border-box",
+  },
   header: {
     display: "flex",
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: "20px",
+    gap: "12px",
+    flexWrap: "wrap",
   },
-
+  titleSection: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+  },
+  headingWrapper: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+  },
+  verticalLine: {
+    width: "4px",
+    height: "24px",
+    backgroundColor: "#6080E8",
+    borderRadius: "2px",
+    flexShrink: 0,
+  },
   title: {
+    fontSize: "22px",
+    fontWeight: "700",
+    color: "#1e293b",
     margin: 0,
-    fontSize: "28px",
-    color: "#111827",
+    lineHeight: "1.2",
   },
-
   subtitle: {
-    marginTop: "5px",
-    color: "#6b7280",
+    fontSize: "13px",
+    color: "#64748b",
+    margin: 0,
+    paddingLeft: "14px",
   },
-
-  button: {
-    background: "#4f46e5",
+  primaryButton: {
+    background: "#6080E8",
     color: "#fff",
     border: "none",
-    padding: "12px 18px",
-    borderRadius: "8px",
+    padding: "8px 16px",
+    borderRadius: "6px",
     cursor: "pointer",
     fontWeight: "600",
+    fontSize: "13px",
+    whiteSpace: "nowrap",
+    boxShadow: "0 2px 4px rgba(96, 128, 232, 0.15)",
+    textAlign: "center",
   },
-
-  card: {
+  tableWrapper: {
+    width: "100%",
     background: "#fff",
     borderRadius: "12px",
-    padding: "20px",
-    boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
+    border: "1px solid #e2e8f0",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+    overflowX: "auto",
+    WebkitOverflowScrolling: "touch",
   },
-
   table: {
     width: "100%",
     borderCollapse: "collapse",
+    minWidth: "700px", // Retains perfect column margins on tight phone interfaces
   },
-
   th: {
+    background: "#f8fafc",
+    padding: "14px 20px",
     textAlign: "left",
-    padding: "14px",
-    borderBottom: "1px solid #e5e7eb",
-    color: "#374151",
+    fontSize: "11px",
+    fontWeight: "600",
+    color: "#64748b",
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
+    borderBottom: "1px solid #e2e8f0",
+    whiteSpace: "nowrap",
   },
-
+  tr: {
+    borderBottom: "1px solid #f1f5f9",
+    transition: "background-color 0.2s ease",
+  },
   td: {
-    padding: "14px",
-    borderBottom: "1px solid #f3f4f6",
+    padding: "12px 20px",
+    fontSize: "14px",
+    color: "#334155",
+    whiteSpace: "nowrap",
+    verticalAlign: "middle",
   },
-
+  typeTag: {
+    display: "inline-block",
+    padding: "4px 10px",
+    borderRadius: "6px",
+    fontSize: "12px",
+    fontWeight: "700",
+  },
+  feeBadge: {
+    background: "#f0fdf4",
+    color: "#166534",
+    padding: "4px 8px",
+    borderRadius: "6px",
+    fontSize: "13px",
+    fontWeight: "600",
+  },
+  actionButtonGroup: {
+    display: "flex",
+    gap: "6px",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   editBtn: {
-    background: "#2563eb",
-    color: "#fff",
-    border: "none",
-    padding: "8px 12px",
+    background: "#fff",
+    color: "#6080E8",
+    border: "1px solid #6080E8",
+    padding: "5px 12px",
     borderRadius: "6px",
-    marginRight: "10px",
     cursor: "pointer",
+    fontWeight: "600",
+    fontSize: "12px",
   },
-
   deleteBtn: {
-    background: "#dc2626",
+    background: "#ef4444",
     color: "#fff",
     border: "none",
-    padding: "8px 12px",
+    padding: "5px 12px",
     borderRadius: "6px",
     cursor: "pointer",
+    fontWeight: "600",
+    fontSize: "12px",
+  },
+  emptyState: {
+    padding: "60px 20px",
+    textAlign: "center",
+    color: "#64748b",
   },
 };

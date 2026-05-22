@@ -1,24 +1,9 @@
 import { useEffect, useState } from "react";
-
-import {
-  useNavigate,
-  useParams
-} from "react-router-dom";
-
 import API from "../../api";
 
-import Sidebar from "../../components/Sidebar";
-
-export default function AddProduct() {
-
-  const navigate = useNavigate();
-
-  const { id } = useParams();
-
+export default function AddProduct({ isOpen, id, onClose, onSuccess }) {
   const [courses, setCourses] = useState([]);
-
   const [formData, setFormData] = useState({
-
     product_name: "",
     product_type: "",
     course_type: "",
@@ -26,105 +11,80 @@ export default function AddProduct() {
     unit_price: "",
     description: "",
     is_active: true,
-
   });
 
   useEffect(() => {
-
-    fetchCourses();
-
-    if (id) {
-      fetchProduct();
+    if (isOpen) {
+      fetchCourses();
+      if (id) {
+        fetchProduct();
+      } else {
+        setFormData({
+          product_name: "",
+          product_type: "",
+          course_type: "",
+          course: "",
+          unit_price: "",
+          description: "",
+          is_active: true,
+        });
+      }
     }
+  }, [id, isOpen]);
 
-  }, [id]);
-
-  // 🚀 FETCH COURSES
   const fetchCourses = async () => {
-
     try {
-
-      const res = await API.get(
-        "/info/courses/"
-      );
-
+      const res = await API.get("/info/courses/");
       setCourses(res.data);
-
     } catch (err) {
-
       console.log(err);
     }
   };
 
-  // 🚀 FETCH PRODUCT
   const fetchProduct = async () => {
-
     try {
-
-      const res = await API.get(
-        `/inventory/products/${id}/`
-      );
-
+      const res = await API.get(`/inventory/products/${id}/`);
       setFormData({
         ...res.data,
         course: res.data.course || "",
       });
-
     } catch (err) {
-
       console.log(err);
     }
   };
 
-  // 🚀 FILTER COURSES
   const filteredCourses = courses.filter((course) => {
-
-    return (
-      course.course_type ===
-      formData.course_type
-    );
+    return course.course_type === formData.course_type;
   });
 
-  // 🚀 HANDLE CHANGE
   const handleChange = (e) => {
-
     const { name, value } = e.target;
 
-    // 🎯 PRODUCT TYPE CHANGE
     if (name === "product_type") {
-
-      // 🎒 BAG
       if (value === "bag") {
-
         setFormData({
           ...formData,
           product_type: value,
           course_type: "common",
           course: "",
         });
-
         return;
       }
-
       setFormData({
         ...formData,
         product_type: value,
         course_type: "",
         course: "",
       });
-
       return;
     }
 
-    // 🎯 COURSE TYPE CHANGE
     if (name === "course_type") {
-
       setFormData({
         ...formData,
         course_type: value,
         course: "",
       });
-
       return;
     }
 
@@ -134,291 +94,337 @@ export default function AddProduct() {
     });
   };
 
-  // 🚀 SUBMIT
   const handleSubmit = async (e) => {
-
     e.preventDefault();
-
     try {
+      const payload = { ...formData };
 
-      const payload = {
-
-        ...formData
-      };
-
-      // 🎒 BAG
       if (payload.product_type === "bag") {
-
         payload.course_type = "common";
         payload.course = null;
       }
 
-      // 🧮 INSTRUMENT
       if (payload.product_type === "instrument") {
-
         payload.course = null;
       }
 
       if (id) {
-
-        await API.put(
-          `/inventory/products/update/${id}/`,
-          payload
-        );
-
+        await API.put(`/inventory/products/update/${id}/`, payload);
         alert("Product Updated Successfully ✨");
-
       } else {
-
-        await API.post(
-          "/inventory/products/create/",
-          payload
-        );
-
+        await API.post("/inventory/products/create/", payload);
         alert("Product Added Successfully 🚀");
       }
-
-      navigate("/products");
-
+      onSuccess();
     } catch (err) {
-
       console.log(err.response?.data);
-
       alert("Something went wrong");
     }
   };
 
+  if (!isOpen) return null;
+
   return (
+    <div style={styles.overlay} onClick={onClose}>
+      <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+        <div style={styles.modalHeader}>
+          <div style={styles.titleWrapper}>
+            <h2 style={styles.title}>{id ? "Edit Stock Item" : "Register New Product"}</h2>
+            <p style={styles.subtitle}>Configure material inventory parameters and rate listings.</p>
+          </div>
+          <button style={styles.closeX} onClick={onClose}>&times;</button>
+        </div>
 
-    <Sidebar>
+        <form onSubmit={handleSubmit} style={styles.form}>
+          <div style={styles.formGrid}>
+            <div style={{ ...styles.inputContainer, gridColumn: "span 2" }}>
+              <label style={styles.fieldLabel}>Product Display Name *</label>
+              <input
+                type="text"
+                name="product_name"
+                value={formData.product_name || ""}
+                onChange={handleChange}
+                placeholder="e.g. Abacus Toolkit Level 1"
+                style={styles.input}
+                required
+              />
+            </div>
 
-      <div style={styles.wrapper}>
+            <div style={styles.inputContainer}>
+              <label style={styles.fieldLabel}>Inventory Item Type *</label>
+              <select
+                name="product_type"
+                value={formData.product_type}
+                onChange={handleChange}
+                style={styles.select}
+                required
+              >
+                <option value="">Select Product Type</option>
+                <option value="book">Book</option>
+                <option value="instrument">Instrument</option>
+                <option value="bag">Bag</option>
+              </select>
+            </div>
 
-        <h2 style={styles.title}>
-          {id ? "Edit Product" : "Add Product"}
-        </h2>
+            <div style={styles.inputContainer}>
+              <label style={styles.fieldLabel}>Selling Unit Price (₹) *</label>
+              <input
+                type="number"
+                name="unit_price"
+                value={formData.unit_price}
+                onChange={handleChange}
+                placeholder="0.00"
+                style={styles.input}
+                required
+              />
+            </div>
 
-        <form
-          onSubmit={handleSubmit}
-          style={styles.form}
-        >
-
-          {/* PRODUCT NAME */}
-          <input
-            type="text"
-            name="product_name"
-            value={formData.product_name}
-            onChange={handleChange}
-            placeholder="Product Name"
-            style={styles.input}
-          />
-
-          {/* PRODUCT TYPE */}
-          <select
-            name="product_type"
-            value={formData.product_type}
-            onChange={handleChange}
-            style={styles.input}
-          >
-
-            <option value="">
-              Select Product Type
-            </option>
-
-            <option value="book">
-              Book
-            </option>
-
-            <option value="instrument">
-              Instrument
-            </option>
-
-            <option value="bag">
-              Bag
-            </option>
-
-          </select>
-
-          {/* COURSE TYPE */}
-
-          {(formData.product_type === "book" ||
-            formData.product_type === "instrument" ||
-            formData.product_type === "bag") && (
-
-            <select
-              name="course_type"
-              value={formData.course_type}
-              onChange={handleChange}
-              style={styles.input}
-            >
-
-              <option value="">
-                Select Course Type
-              </option>
-
-              <option value="abacus">
-                Abacus
-              </option>
-
-              <option value="vedic_maths">
-                Vedic Maths
-              </option>
-
-              {/* 🎒 BAG */}
-              {formData.product_type === "bag" && (
-
-                <option value="common">
-                  Common
-                </option>
-
-              )}
-
-            </select>
-
-          )}
-
-          {/* COURSE */}
-
-          {formData.product_type === "book" && (
-
-            <select
-              name="course"
-              value={formData.course}
-              onChange={handleChange}
-              style={styles.input}
-            >
-
-              <option value="">
-                Select Course
-              </option>
-
-              {filteredCourses.map((course) => (
-
-                <option
-                  key={course.id}
-                  value={course.id}
+            {/* COURSE TYPE FIELD */}
+            {(formData.product_type === "book" ||
+              formData.product_type === "instrument" ||
+              formData.product_type === "bag") && (
+              <div style={styles.inputContainer}>
+                <label style={styles.fieldLabel}>Course Alignment Type *</label>
+                <select
+                  name="course_type"
+                  value={formData.course_type}
+                  onChange={handleChange}
+                  style={styles.select}
+                  required
+                  disabled={formData.product_type === "bag"}
                 >
+                  <option value="">Select Course Alignment</option>
+                  <option value="abacus">Abacus</option>
+                  <option value="vedic_maths">Vedic Maths</option>
+                  {formData.product_type === "bag" && <option value="common">Common</option>}
+                </select>
+              </div>
+            )}
 
-                  {course.course_type ===
-                    "abacus"
-                    ? "Abacus"
-                    : "Vedic Maths"} - {" "}
-                  {course.level}
+            {/* DYNAMIC COURSE LEVEL BOUNDARY FIELD */}
+            {formData.product_type === "book" && (
+              <div style={styles.inputContainer}>
+                <label style={styles.fieldLabel}>Specific Course Target Level *</label>
+                <select
+                  name="course"
+                  value={formData.course}
+                  onChange={handleChange}
+                  style={styles.select}
+                  required
+                >
+                  <option value="">Select Associated Level</option>
+                  {filteredCourses.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.course_type === "abacus" ? "Abacus" : "Vedic Maths"} - {course.level}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
-                </option>
+            {/* STATIC LABEL LABELS */}
+            {formData.product_type === "instrument" && (
+              <div style={styles.infoWrapper}>
+                <span style={styles.infoLabel}>Automated Level Assignment</span>
+                <div style={styles.infoBox}>All Levels Applicable</div>
+              </div>
+            )}
 
-              ))}
+            {formData.product_type === "bag" && (
+              <div style={styles.infoWrapper}>
+                <span style={styles.infoLabel}>Automated Level Assignment</span>
+                <div style={styles.infoBox}>Common Distribution Set</div>
+              </div>
+            )}
 
-            </select>
-
-          )}
-
-          {/* LEVEL INFO */}
-
-          {formData.product_type ===
-            "instrument" && (
-
-            <div style={styles.infoBox}>
-              Level: All Levels
+            <div style={{ ...styles.inputContainer, gridColumn: "span 2" }}>
+              <label style={styles.fieldLabel}>Product Description Summary</label>
+              <textarea
+                name="description"
+                value={formData.description || ""}
+                onChange={handleChange}
+                placeholder="Add stock notes or package specifications here..."
+                style={styles.textarea}
+              />
             </div>
+          </div>
 
-          )}
-
-          {formData.product_type ===
-            "bag" && (
-
-            <div style={styles.infoBox}>
-              Level: Common
-            </div>
-
-          )}
-
-          {/* UNIT PRICE */}
-          <input
-            type="number"
-            name="unit_price"
-            value={formData.unit_price}
-            onChange={handleChange}
-            placeholder="Unit Price"
-            style={styles.input}
-          />
-
-          {/* DESCRIPTION */}
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            placeholder="Description"
-            style={styles.textarea}
-          />
-
-          {/* BUTTON */}
-          <button
-            type="submit"
-            style={styles.button}
-          >
-            {id
-              ? "Update Product"
-              : "Save Product"}
-          </button>
-
+          <div style={styles.actionRow}>
+            <button type="button" style={styles.cancelBtn} onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" style={styles.submitBtn}>
+              {id ? "Save Item Parameters" : "Publish Stock Item"}
+            </button>
+          </div>
         </form>
-
       </div>
-
-    </Sidebar>
+    </div>
   );
 }
 
 const styles = {
-
-  wrapper: {
+  overlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(15, 23, 42, 0.4)",
+    backdropFilter: "blur(5px)",
+    WebkitBackdropFilter: "blur(5px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2000,
+    padding: "20px",
+    boxSizing: "border-box",
+  },
+  modalCard: {
     background: "#fff",
     padding: "30px",
-    borderRadius: "12px",
-    maxWidth: "700px",
+    borderRadius: "14px",
+    boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+    width: "100%",
+    maxWidth: "580px",
+    maxHeight: "90vh",
+    overflowY: "auto",
+    boxSizing: "border-box",
   },
-
-  title: {
+  modalHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    borderBottom: "1px solid #f1f5f9",
+    paddingBottom: "16px",
     marginBottom: "20px",
   },
-
+  titleWrapper: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+  },
+  title: {
+    fontSize: "20px",
+    fontWeight: "700",
+    color: "#1e293b",
+    margin: 0,
+  },
+  subtitle: {
+    fontSize: "13px",
+    color: "#64748b",
+    margin: 0,
+  },
+  closeX: {
+    background: "none",
+    border: "none",
+    fontSize: "24px",
+    color: "#94a3b8",
+    cursor: "pointer",
+    padding: "0 4px",
+    lineHeight: "1",
+  },
   form: {
     display: "flex",
     flexDirection: "column",
-    gap: "15px",
+    gap: "18px",
   },
-
+  formGrid: {
+    display: "grid",
+    gridTemplateColumns: window.innerWidth <= 600 ? "1fr" : "1fr 1fr",
+    gap: "16px",
+  },
+  inputContainer: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+    gridColumn: window.innerWidth <= 600 ? "span 2" : "initial",
+  },
+  fieldLabel: {
+    fontSize: "12px",
+    fontWeight: "600",
+    color: "#475569",
+  },
   input: {
-    padding: "12px",
-    borderRadius: "8px",
-    border: "1px solid #d1d5db",
+    padding: "10px 14px",
+    borderRadius: "6px",
+    border: "1px solid #cbd5e1",
+    fontSize: "14px",
     outline: "none",
+    color: "#334155",
+    boxSizing: "border-box",
+    width: "100%",
   },
-
+  select: {
+    padding: "10px 14px",
+    borderRadius: "6px",
+    border: "1px solid #cbd5e1",
+    fontSize: "14px",
+    outline: "none",
+    color: "#334155",
+    boxSizing: "border-box",
+    width: "100%",
+    background: "#fff",
+    cursor: "pointer",
+  },
   textarea: {
-    padding: "12px",
-    borderRadius: "8px",
-    border: "1px solid #d1d5db",
-    minHeight: "120px",
+    padding: "10px 14px",
+    borderRadius: "6px",
+    border: "1px solid #cbd5e1",
+    fontSize: "14px",
     outline: "none",
+    color: "#334155",
+    boxSizing: "border-box",
+    width: "100%",
+    minHeight: "90px",
+    resize: "vertical",
   },
-
+  infoWrapper: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+    gridColumn: window.innerWidth <= 600 ? "span 2" : "initial",
+  },
+  infoLabel: {
+    fontSize: "12px",
+    fontWeight: "600",
+    color: "#64748b",
+  },
   infoBox: {
-    background: "#f3f4f6",
-    padding: "12px",
-    borderRadius: "8px",
-    color: "#374151",
+    background: "#f1f5f9",
+    padding: "10px 14px",
+    borderRadius: "6px",
+    border: "1px solid #e2e8f0",
+    color: "#475569",
+    fontSize: "14px",
     fontWeight: "600",
   },
-
-  button: {
-    background: "#4f46e5",
-    color: "#fff",
-    border: "none",
-    padding: "14px",
-    borderRadius: "8px",
+  actionRow: {
+    display: "flex",
+    gap: "12px",
+    justifyContent: "flex-end",
+    borderTop: "1px solid #f1f5f9",
+    paddingTop: "16px",
+  },
+  cancelBtn: {
+    background: "#fff",
+    color: "#475569",
+    border: "1px solid #cbd5e1",
+    padding: "8px 16px",
+    borderRadius: "6px",
     cursor: "pointer",
     fontWeight: "600",
+    fontSize: "13px",
+  },
+  submitBtn: {
+    background: "#6080E8",
+    color: "#fff",
+    border: "none",
+    padding: "8px 16px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "600",
+    fontSize: "13px",
+    boxShadow: "0 2px 4px rgba(96, 128, 232, 0.15)",
   },
 };

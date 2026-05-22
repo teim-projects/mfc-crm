@@ -1,109 +1,92 @@
 import { useState } from "react";
-
 import Sidebar from "../../components/Sidebar";
-
 import Vendors from "./Vendors";
 import PurchaseOrders from "./PurchaseOrders";
 import GRN from "./GRN";
 
 export default function Inventory() {
-
-  const [activeTab, setActiveTab] =
-    useState("vendor");
+  const [activeTab, setActiveTab] = useState("vendor");
 
   return (
-
     <Sidebar>
+      <div style={styles.container}>
+        {/* TOP SEGMENTED CONTROLS / TABS */}
+        <div style={styles.tabContainer}>
+          <button
+            style={activeTab === "vendor" ? styles.activeTab : styles.tab}
+            onClick={() => setActiveTab("vendor")}
+          >
+            Vendors
+          </button>
 
-      {/* TOP TABS */}
+          <button
+            style={activeTab === "po" ? styles.activeTab : styles.tab}
+            onClick={() => setActiveTab("po")}
+          >
+            Purchase Orders
+          </button>
 
-      <div style={styles.tabContainer}>
+          <button
+            style={activeTab === "grn" ? styles.activeTab : styles.tab}
+            onClick={() => setActiveTab("grn")}
+          >
+            GRN Slips
+          </button>
+        </div>
 
-        <button
-          style={
-            activeTab === "vendor"
-              ? styles.activeTab
-              : styles.tab
-          }
-          onClick={() =>
-            setActiveTab("vendor")
-          }
-        >
-          Vendor
-        </button>
-
-        <button
-          style={
-            activeTab === "po"
-              ? styles.activeTab
-              : styles.tab
-          }
-          onClick={() =>
-            setActiveTab("po")
-          }
-        >
-          Purchase Order
-        </button>
-
-        <button
-          style={
-            activeTab === "grn"
-              ? styles.activeTab
-              : styles.tab
-          }
-          onClick={() =>
-            setActiveTab("grn")
-          }
-        >
-          GRN
-        </button>
-
+        {/* COMPONENT CONTENT VIEWS */}
+        <div style={styles.contentArea}>
+          {activeTab === "vendor" && <Vendors />}
+          {activeTab === "po" && <PurchaseOrders />}
+          {activeTab === "grn" && <GRN />}
+        </div>
       </div>
-
-      {/* CONTENT */}
-
-      {activeTab === "vendor" &&
-        <Vendors />
-      }
-
-      {activeTab === "po" &&
-        <PurchaseOrders />
-      }
-
-      {activeTab === "grn" &&
-        <GRN />
-      }
-
     </Sidebar>
   );
 }
 
 const styles = {
-
+  container: {
+    width: "100%",
+    boxSizing: "border-box",
+  },
   tabContainer: {
-    display: "flex",
-    gap: "15px",
-    marginBottom: "25px",
-  },
-
-  tab: {
-    padding: "12px 22px",
-    border: "none",
-    borderRadius: "8px",
+    display: "inline-flex",
     background: "#e2e8f0",
-    cursor: "pointer",
-    fontWeight: "600",
-    fontSize: "14px",
-  },
-
-  activeTab: {
-    padding: "12px 22px",
-    border: "none",
+    padding: "4px",
     borderRadius: "8px",
-    background: "#4f46e5",
-    color: "#fff",
+    marginBottom: "24px",
+    gap: "4px",
+    maxWidth: "100%",
+    overflowX: "auto",
+    WebkitOverflowScrolling: "touch",
+  },
+  tab: {
+    padding: "8px 16px",
+    border: "none",
+    borderRadius: "6px",
+    background: "transparent",
+    color: "#475569",
     cursor: "pointer",
     fontWeight: "600",
-    fontSize: "14px",
+    fontSize: "13px",
+    whiteSpace: "nowrap",
+    transition: "all 0.2s ease",
+  },
+  activeTab: {
+    padding: "8px 16px",
+    border: "none",
+    borderRadius: "6px",
+    background: "#fff",
+    color: "#6080E8",
+    cursor: "pointer",
+    fontWeight: "700",
+    fontSize: "13px",
+    whiteSpace: "nowrap",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+    transition: "all 0.2s ease",
+  },
+  contentArea: {
+    width: "100%",
   },
 };
