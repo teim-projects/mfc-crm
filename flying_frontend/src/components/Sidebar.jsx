@@ -14,7 +14,6 @@ export default function Sidebar({
 }) {
 
   const navigate = useNavigate();
-
   const location = useLocation();
 
   const [sidebarOpen, setSidebarOpen] =
@@ -140,16 +139,6 @@ export default function Sidebar({
             <div style={styles.innerCircle}></div>
           </div>
         </div>
-
-        {/* RIGHT */}
-
-        {/* <div style={styles.userSection}>
-
-          <span style={styles.userText}>
-            Admin User
-          </span>
-
-        </div> */}
 
       </div>
 
@@ -373,73 +362,75 @@ export default function Sidebar({
 }
 
 const styles = {
-
   /* NEW ART STYLES */
-artSection: {
-  flex: 1,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: window.innerWidth <= 768 ? "8px" : "15px",
-  opacity: 0.7,
-  padding: "0 10px",
-  overflow: "hidden",
-},
+  artSection: {
+    flex: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: window.innerWidth <= 768 ? "8px" : "15px",
+    opacity: 0.7,
+    padding: "0 10px",
+    overflow: "hidden",
+  },
 
-artText: {
-  fontSize: window.innerWidth <= 768 ? "0.55rem" : "0.85rem",
-  fontWeight: "600",
-  color: "#6080E8",
-  textTransform: "uppercase",
-  letterSpacing: window.innerWidth <= 768 ? "1px" : "2px",
-  whiteSpace: "nowrap",
-},
+ 
 
-abacusIcon: {
-  width: window.innerWidth <= 768 ? "10px" : "14px",
-  height: window.innerWidth <= 768 ? "16px" : "22px",
-  border: "2px solid #6080E8",
-  borderRadius: "2px",
-  position: "relative",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "space-around",
-  flexShrink: 0,
-},
 
-abacusWire: {
-  position: "absolute",
-  width: "2px",
-  height: "100%",
-  background: "#6080E8",
-},
+  artText: {
+    fontSize: window.innerWidth <= 768 ? "0.75rem" : "0.85rem",
+    fontWeight: "700",
+    color: "#6080E8",
+    textTransform: "uppercase",
+    letterSpacing: window.innerWidth <= 768 ? "1px" : "2px",
+    whiteSpace: "nowrap",
+  },
 
-bead: {
-  width: window.innerWidth <= 768 ? "5px" : "8px",
-  height: window.innerWidth <= 768 ? "3px" : "4px",
-  background: "#6080E8",
-  borderRadius: "1px",
-  zIndex: 1,
-},
+  abacusIcon: {
+    width: window.innerWidth <= 768 ? "10px" : "14px",
+    height: window.innerWidth <= 768 ? "16px" : "22px",
+    border: "2px solid #6080E8",
+    borderRadius: "2px",
+    position: "relative",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "space-around",
+    flexShrink: 0,
+  },
 
-vedicSymbol: {
-  width: window.innerWidth <= 768 ? "14px" : "20px",
-  height: window.innerWidth <= 768 ? "14px" : "20px",
-  border: "1px solid #6080E8",
-  borderRadius: "50%",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  transform: "rotate(45deg)",
-  flexShrink: 0,
-},
+  abacusWire: {
+    position: "absolute",
+    width: "2px",
+    height: "100%",
+    background: "#6080E8",
+  },
 
-innerCircle: {
-  width: window.innerWidth <= 768 ? "6px" : "10px",
-  height: window.innerWidth <= 768 ? "6px" : "10px",
-  border: "1px solid #6080E8",
-},
+  bead: {
+    width: window.innerWidth <= 768 ? "5px" : "8px",
+    height: window.innerWidth <= 768 ? "3px" : "4px",
+    background: "#6080E8",
+    borderRadius: "1px",
+    zIndex: 1,
+  },
+
+  vedicSymbol: {
+    width: window.innerWidth <= 768 ? "14px" : "20px",
+    height: window.innerWidth <= 768 ? "14px" : "20px",
+    border: "1px solid #6080E8",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transform: "rotate(45deg)",
+    flexShrink: 0,
+  },
+
+  innerCircle: {
+    width: window.innerWidth <= 768 ? "6px" : "10px",
+    height: window.innerWidth <= 768 ? "6px" : "10px",
+    border: "1px solid #6080E8",
+  },
 
   // =====================================
   // LAYOUT
@@ -450,12 +441,15 @@ innerCircle: {
     height: "100vh",
     overflow: "hidden",
     background: "#f5f7fb",
+    display: "flex",        // 🌟 Added: Stacks elements cleanly
+    flexDirection: "column" // 🌟 Added: Places topbar vertically over body
   },
 
   body: {
     display: "flex",
-    height:
-      "calc(100vh - 72px)",
+    flex: 1,                // 🌟 Added: Tells body box to occupy 100% of remaining viewport depth, fixing the whitespace instantly
+    width: "100%",
+    overflow: "hidden",     // 🌟 Added: Locks scrolling bugs on parent layers
   },
 
   // =====================================
@@ -463,17 +457,18 @@ innerCircle: {
   // =====================================
 
   topbar: {
-  height: window.innerWidth <= 768 ? "60px" : "72px",
-  background: "#ffffff",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  borderBottom: "1px solid #e5e7eb",
-  boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
-  position: "sticky",
-  top: 0,
-  zIndex: 999,
-},
+    height: window.innerWidth <= 768 ? "60px" : "72px",
+    background: "#ffffff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderBottom: "1px solid #e5e7eb",
+    boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
+    position: "sticky",
+    top: 0,
+    zIndex: 999,
+    flexShrink: 0,          // 🌟 Added: Protects layout boundaries from collapsing
+  },
 
   logoSection: {
     height: "100%",
@@ -482,34 +477,32 @@ innerCircle: {
     alignItems: "center",
     gap: "15px",
     padding: "0 20px",
-    transition:
-      "all 0.3s ease",
+    transition: "all 0.3s ease",
     overflow: "hidden",
     flexShrink: 0,
   },
 
- menuButton: {
-  background: "transparent",
-  border: "none",
-  color: "#ffffff",
-  fontSize: window.innerWidth <= 768 ? "22px" : "26px",
-  cursor: "pointer",
-  minWidth: "30px",
-},
+  menuButton: {
+    background: "transparent",
+    border: "none",
+    color: "#ffffff",
+    fontSize: window.innerWidth <= 768 ? "22px" : "26px",
+    cursor: "pointer",
+    minWidth: "30px",
+  },
 
   logoText: {
-  color: "#ffffff",
-  fontSize: "1.2rem",
-  fontWeight: "750",
-  letterSpacing: "0.5px",
-  whiteSpace: "nowrap",
-},
+    color: "#ffffff",
+    fontSize: "1.2rem",
+    fontWeight: "750",
+    letterSpacing: "0.5px",
+    whiteSpace: "nowrap",
+  },
 
   centerSection: {
     flex: 1,
     display: "flex",
-    justifyContent:
-      "center",
+    justifyContent: "center",
   },
 
   centerText: {
@@ -534,15 +527,13 @@ innerCircle: {
 
   sidebar: {
     background: "#1E1E2D",
-    transition:
-      "all 0.3s ease",
+    transition: "all 0.3s ease",
     display: "flex",
     flexDirection: "column",
-    justifyContent:
-      "space-between",
+    justifyContent: "space-between",
     overflow: "hidden",
-    borderRight:
-      "1px solid rgba(255,255,255,0.05)",
+    borderRight: "1px solid rgba(255,255,255,0.05)",
+    height: "100%",        // 🌟 Added: Keeps panel extended matching content bounds
   },
 
   menu: {
@@ -553,59 +544,35 @@ innerCircle: {
   },
 
   link: {
-    color:
-      "rgba(255,255,255,0.75)",
-
+    color: "rgba(255,255,255,0.75)",
     textDecoration: "none",
-
     padding: "14px 18px",
-
     borderRadius: "12px",
-
     fontWeight: "500",
-
     display: "flex",
-
     alignItems: "center",
-
     minHeight: "50px",
-
-    transition:
-      "all 0.2s ease",
-
+    transition: "all 0.2s ease",
     whiteSpace: "nowrap",
   },
 
   activeLink: {
-    background:
-      "linear-gradient(135deg,#6080E8,#7C94F2)",
-
+    background: "linear-gradient(135deg,#6080E8,#7C94F2)",
     color: "#ffffff",
-
     textDecoration: "none",
-
     padding: "14px 18px",
-
     borderRadius: "12px",
-
     fontWeight: "700",
-
     display: "flex",
-
     alignItems: "center",
-
     minHeight: "50px",
-
     whiteSpace: "nowrap",
-
-    boxShadow:
-      "0 8px 18px rgba(96,128,232,0.35)",
+    boxShadow: "0 8px 18px rgba(96,128,232,0.35)",
   },
 
   logout: {
     margin: "20px",
-    background:
-      "linear-gradient(135deg,#ef4444,#dc2626)",
+    background: "linear-gradient(135deg,#ef4444,#dc2626)",
     color: "#ffffff",
     border: "none",
     padding: "14px",
@@ -624,5 +591,6 @@ innerCircle: {
     overflowY: "auto",
     padding: "25px",
     background: "#f5f7fb",
+    height: "100%",        // 🌟 Added: Anchors content container block to the baseline
   },
 };
