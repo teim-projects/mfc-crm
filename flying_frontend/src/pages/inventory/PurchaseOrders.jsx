@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../../api";
-import AddPO from "./AddPO";
+import AddPo from "./AddPo";
 
 export default function PurchaseOrders() {
   const [purchaseOrders, setPurchaseOrders] = useState([]);
@@ -114,7 +114,7 @@ export default function PurchaseOrders() {
       </div>
 
       {/* POPUP CONFIG OVERLAY */}
-      <AddPO isOpen={modalOpen} id={targetPOId} onClose={() => setModalOpen(false)} onSuccess={handleModalSuccess} />
+      <AddPo isOpen={modalOpen} id={targetPOId} onClose={() => setModalOpen(false)} onSuccess={handleModalSuccess} />
     </div>
   );
 }

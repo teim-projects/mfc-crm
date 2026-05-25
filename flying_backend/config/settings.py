@@ -25,7 +25,11 @@ SECRET_KEY = 'django-insecure-m895$e=ed6#($tzyf+r-_7%+bpke$tge6m_xlcf$9m!i(e-vl^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "91.99.119.240",
+    "mfc-crm.calculination.com",
+    "www.mfc-crm.calculination.com"
+]
 
 CORS_ALLOW_ALL_ORIGINS = True
 
@@ -135,7 +139,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 AUTH_USER_MODEL = 'accounts.User'
 

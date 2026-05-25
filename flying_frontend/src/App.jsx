@@ -19,7 +19,7 @@ import AddProduct from "./pages/product/AddProduct";
 
 import AddVendor from "./pages/inventory/AddVendor";
 import Inventory from "./pages/inventory/Inventory";
-import AddPO from "./pages/inventory/AddPO";
+import AddPO from "./pages/inventory/AddPo";
 import AddGRN from "./pages/inventory/AddGRN";
 
 
