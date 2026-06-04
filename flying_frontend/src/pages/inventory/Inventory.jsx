@@ -3,6 +3,7 @@ import Sidebar from "../../components/Sidebar";
 import Vendors from "./Vendors";
 import PurchaseOrders from "./PurchaseOrders";
 import GRN from "./GRN";
+import StockSummary from "./StockSummary";
 
 export default function Inventory() {
   const [activeTab, setActiveTab] = useState("vendor");
@@ -32,6 +33,19 @@ export default function Inventory() {
           >
             GRN Slips
           </button>
+
+          <button
+           style={
+             activeTab === "stock"
+               ? styles.activeTab
+               : styles.tab
+           }
+           onClick={() =>
+             setActiveTab("stock")
+           }
+           >
+             Stock Summary
+           </button>
         </div>
 
         {/* COMPONENT CONTENT VIEWS */}
@@ -39,6 +53,7 @@ export default function Inventory() {
           {activeTab === "vendor" && <Vendors />}
           {activeTab === "po" && <PurchaseOrders />}
           {activeTab === "grn" && <GRN />}
+          {activeTab === "stock" && (<StockSummary />)}
         </div>
       </div>
     </Sidebar>

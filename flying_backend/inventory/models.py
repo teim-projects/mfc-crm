@@ -5,6 +5,7 @@ from info.models import Course
 from django.core.exceptions import ValidationError
 
 
+
 class Product(models.Model):
 
     PRODUCT_TYPES = (
@@ -318,6 +319,16 @@ class PurchaseOrderItem(models.Model):
 
     quantity = models.PositiveIntegerField()
 
+    # NEW
+    replacement_qty = models.PositiveIntegerField(
+        default=0
+    )
+
+    # NEW
+    billable_qty = models.PositiveIntegerField(
+        default=0
+    )
+
     unit = models.CharField(
         max_length=50,
         default="PCS"
@@ -348,14 +359,30 @@ class PurchaseOrderItem(models.Model):
 
     def save(self, *args, **kwargs):
 
-        base_amount = self.quantity * self.rate
+        if self.replacement_qty > self.quantity:
+            raise ValidationError(
+                "Replacement Qty cannot exceed Quantity"
+            )
+
+
+        self.billable_qty = (
+            self.quantity -
+            self.replacement_qty
+        )
+
+        base_amount = (
+            self.billable_qty *
+            self.rate
+        )
 
         gst_amount = (
-            base_amount * self.gst_percent
+            base_amount *
+            self.gst_percent
         ) / 100
 
         self.amount = (
-            base_amount + gst_amount
+            base_amount +
+            gst_amount
         )
 
         super().save(*args, **kwargs)
@@ -418,6 +445,7 @@ class GRN(models.Model):
     )
 
     def __str__(self):
+        
 
         return self.grn_number
 
@@ -442,6 +470,9 @@ class GRNItem(models.Model):
     ordered_qty = models.IntegerField()
 
     received_qty = models.IntegerField()
+    replacement_qty = models.IntegerField(
+    default=0
+)
 
     accepted_qty = models.IntegerField()
 
@@ -505,15 +536,19 @@ class Stock(models.Model):
         default=0
     )
 
-    sold_stock = models.IntegerField(
+    inward_stock = models.IntegerField(
         default=0
     )
 
-    current_stock = models.IntegerField(
+    outward_stock = models.IntegerField(
         default=0
     )
 
     damaged_stock = models.IntegerField(
+        default=0
+    )
+
+    current_stock = models.IntegerField(
         default=0
     )
 
@@ -525,5 +560,111 @@ class Stock(models.Model):
 
         return (
             f"{self.product.product_name}"
-            f" - {self.current_stock}"
         )
+
+
+class StockTransaction(models.Model):
+
+    TRANSACTION_TYPES = (
+
+        ("IN", "Stock In"),
+
+        ("OUT", "Stock Out"),
+
+        ("DAMAGED", "Damaged"),
+
+        ("ADJUSTMENT", "Adjustment"),
+    )
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="stock_transactions"
+    )
+
+    transaction_type = models.CharField(
+        max_length=20,
+        choices=TRANSACTION_TYPES
+    )
+
+    quantity = models.IntegerField()
+
+    reference_type = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True
+    )
+
+    reference_id = models.IntegerField(
+        blank=True,
+        null=True
+    )
+
+    remarks = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+
+        return (
+            f"{self.product.product_name}"
+            f" - "
+            f"{self.transaction_type}"
+        )
+
+
+
+class VendorDamagedStock(models.Model):
+
+    vendor = models.ForeignKey(
+        Vendor,
+        on_delete=models.CASCADE,
+        related_name="damaged_items"
+    )
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE
+    )
+
+    total_damaged_qty = models.IntegerField(
+        default=0
+    )
+
+    settled_qty = models.IntegerField(
+        default=0
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+
+    @property
+    def pending_qty(self):
+
+        return (
+            self.total_damaged_qty -
+            self.settled_qty
+        )
+
+    def __str__(self):
+
+        return (
+            f"{self.vendor.vendor_name} - "
+            f"{self.product.product_name}"
+        )
+
+
+    class Meta:
+    
+            unique_together = (
+                "vendor",
+                "product"
+            )        
+

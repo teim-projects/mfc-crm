@@ -21,6 +21,13 @@ export default function Sidebar({
       window.innerWidth > 768
     );
 
+  const [billingOpen, setBillingOpen] =
+  useState(
+    location.pathname.startsWith(
+      "/billing"
+    )
+  );  
+
   // =====================================
   // RESPONSIVE
   // =====================================
@@ -244,6 +251,23 @@ export default function Sidebar({
                 "Students"}
             </Link>
 
+{/* Promote */}
+            <Link
+  to="/promotions"
+  style={
+    sidebarOpen
+      ? (
+          isActive("/promotions")
+            ? styles.activeLink
+            : styles.link
+        )
+      : styles.link
+  }
+>
+  {sidebarOpen &&
+    "Promotions"}
+</Link>
+
             {/* COURSES */}
 
             <Link
@@ -304,6 +328,79 @@ export default function Sidebar({
                 "Inventory"}
             </Link>
 
+
+            {/* BILLING */}
+
+            {/* BILLING */}
+
+<div>
+
+  <div
+    onClick={() =>
+      setBillingOpen(
+        !billingOpen
+      )
+    }
+    style={
+  !sidebarOpen
+    ? styles.link
+    : (
+        isActive("/billing")
+          ? styles.activeLink
+          : styles.link
+      )
+}
+  >
+    {sidebarOpen && (
+      <>
+        <span>
+          Billing
+        </span>
+
+        <span
+          style={{
+            marginLeft: "auto"
+          }}
+        >
+          {
+            billingOpen
+              ? "▼"
+              : "▶"
+          }
+        </span>
+      </>
+    )}
+  </div>
+
+  {
+    billingOpen &&
+    sidebarOpen && (
+
+      <Link
+        to="/billing"
+        style={{
+          ...styles.subLink,
+
+          background:
+  location.pathname.startsWith(
+    "/billing"
+  )
+    ? "#2b2b40"
+    : "transparent"
+        }}
+      >
+        Parent Purchase
+      </Link>
+
+    )
+  }
+
+</div>
+
+
+
+
+
             {/* REPORTS */}
 
             <Link
@@ -362,6 +459,17 @@ export default function Sidebar({
 }
 
 const styles = {
+
+
+  subLink: {
+  color: "#cbd5e1",
+  textDecoration: "none",
+  padding: "10px 18px 10px 45px",
+  borderRadius: "8px",
+  fontSize: "14px",
+  display: "block",
+  marginTop: "4px",
+},
   /* NEW ART STYLES */
   artSection: {
     flex: 1,

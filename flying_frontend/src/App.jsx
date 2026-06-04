@@ -21,7 +21,12 @@ import AddVendor from "./pages/inventory/AddVendor";
 import Inventory from "./pages/inventory/Inventory";
 import AddPO from "./pages/inventory/AddPo";
 import AddGRN from "./pages/inventory/AddGRN";
+import ParentPurchase from "./pages/billing/ParentPurchase";
+import SchoolStudents from "./pages/billing/SchoolStudents";
 
+import CreateReceipt from "./pages/billing/CreateReceipt";
+import ReceiptDetail from "./pages/billing/ReceiptDetail";
+import Promotion from "./pages/students/Promotion";
 
 function App() {
   return (
@@ -71,6 +76,13 @@ function App() {
         <Route path="/grn/add" element={   <ProtectedRoute>     <AddGRN />   </ProtectedRoute>}/>
 
         <Route  path="/grn/edit/:id" element={   <ProtectedRoute>     <AddGRN />   </ProtectedRoute> }/>
+
+        <Route path="/billing" element={<ProtectedRoute><ParentPurchase /></ProtectedRoute>} />
+        <Route path="/billing/school/:schoolId/students" element={<ProtectedRoute><SchoolStudents /></ProtectedRoute>}/>
+        
+        <Route path="/billing/create" element={<ProtectedRoute><CreateReceipt /></ProtectedRoute>} />
+        <Route path="/billing/receipt-detail/:receiptId" element={<ProtectedRoute><ReceiptDetail /></ProtectedRoute>} />
+        <Route path="/promotions" element={   <ProtectedRoute>     <Promotion />   </ProtectedRoute> }/>
         
 
         

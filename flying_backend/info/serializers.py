@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import School , Student
+from .models import School , Student, StudentEnrollment
 
 
 class SchoolSerializer(serializers.ModelSerializer):
@@ -65,3 +65,32 @@ class StudentSerializer(serializers.ModelSerializer):
 
 
 
+class StudentEnrollmentSerializer(
+    serializers.ModelSerializer
+):
+
+    student_name =serializers.CharField(
+        source="student.student_name",
+        read_only=True
+    )
+
+    school_name =serializers.CharField(
+        source="school.school_name",
+        read_only=True
+    )
+
+    course_name =serializers.CharField(
+        source="course.course_type",
+        read_only=True
+    )
+
+    level =serializers.CharField(
+        source="course.level",
+        read_only=True
+    )
+
+    class Meta:
+
+        model = StudentEnrollment
+
+        fields = "__all__"

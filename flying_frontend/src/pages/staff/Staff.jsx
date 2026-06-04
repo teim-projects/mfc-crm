@@ -2,21 +2,38 @@ import { useEffect, useState } from "react";
 import API from "../../api";
 import Sidebar from "../../components/Sidebar";
 import AddRole from "./AddRole"; 
-import AddStaff from "./AddStaff"; // Imported as modular overlay popup
+import AddStaff from "./AddStaff"; 
+import Pagination from "../../components/Pagination";
+import AdvancedTableFilter from "../../components/AdvancedTableFilter";
 
 export default function Staff() {
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [itemsPerPage, setItemsPerPage] = useState(8);
+  const [currentPage, setCurrentPage] = useState(1);
+
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false); 
-  const [isStaffModalOpen, setIsStaffModalOpen] = useState(false); // Manages state for Staff entry popup
+  const [isStaffModalOpen, setIsStaffModalOpen] = useState(false); 
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  // Dynamic window width tracker for handling responsive inline styles
+  const [windowWidth, setWindowWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1200
+  );
 
   useEffect(() => {
     fetchUsers();
+
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const fetchUsers = async () => {
     try {
       const res = await API.get("/auth/users/");
       setUsers(res.data);
+      setFilteredUsers(res.data);
     } catch (err) {
       console.log(err);
     }
@@ -31,11 +48,24 @@ export default function Staff() {
     }
   };
 
+  // =====================================
+  // PAGINATION
+  // =====================================
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
+
+  const isMobile = windowWidth <= 640;
+
   return (
     <Sidebar>
       <div style={styles.container}>
         {/* HEADER SECTION */}
-        <div style={styles.header}>
+        <div style={{
+          ...styles.header,
+          flexDirection: isMobile ? "column" : "row",
+          alignItems: isMobile ? "stretch" : "center"
+        }}>
           <div style={styles.titleSection}>
             <div style={styles.headingWrapper}>
               <div style={styles.verticalLine}></div>
@@ -44,15 +74,25 @@ export default function Staff() {
             <p style={styles.subtitle}>Manage your team members and their access levels.</p>
           </div>
 
-          <div style={styles.buttonGroup}>
+          <div style={{
+            ...styles.buttonGroup,
+            flexDirection: isMobile ? "column" : "row",
+            width: isMobile ? "100%" : "auto"
+          }}>
             <button 
-              style={styles.secondaryButton} 
+              style={{ ...styles.secondaryButton, width: isMobile ? "100%" : "auto" }} 
+              onClick={() => setIsFilterOpen(true)}
+            >
+              🔍 Filter
+            </button>
+            <button 
+              style={{ ...styles.secondaryButton, width: isMobile ? "100%" : "auto" }} 
               onClick={() => setIsRoleModalOpen(true)}
             >
               Add Role
             </button>
             <button 
-              style={styles.primaryButton} 
+              style={{ ...styles.primaryButton, width: isMobile ? "100%" : "auto" }} 
               onClick={() => setIsStaffModalOpen(true)}
             >
               + Add Staff
@@ -72,7 +112,7 @@ export default function Staff() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
+                {paginatedUsers.map((user) => (
                   <tr key={user.id} style={styles.tr}>
                     <td style={styles.td}>
                       <div style={styles.userNameContainer}>
@@ -83,7 +123,7 @@ export default function Staff() {
                       </div>
                     </td>
                     <td style={styles.td}>
-                      <span style={styles.roleBadge}>{user.role || "Staff"}</span>
+                      <span style={styles.roleBadge}>{user.role_name || "Staff"}</span>
                     </td>
                     <td style={styles.td}>
                       {user.is_superuser ? (
@@ -110,6 +150,34 @@ export default function Staff() {
             </div>
           )}
         </div>
+        
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      </div>
+
+      {/* FILTER SLIDING DRAWER & OVERLAY */}
+      {isFilterOpen && (
+        <div style={styles.drawerOverlay} onClick={() => setIsFilterOpen(false)} />
+      )}
+      <div style={{
+        ...styles.drawer,
+        width: isMobile ? "100%" : "360px",
+        transform: isFilterOpen ? "translateX(0)" : "translateX(100%)"
+      }}>
+        <div style={styles.drawerHeader}>
+          <h3 style={styles.drawerTitle}>Filters</h3>
+          <button style={styles.closeButton} onClick={() => setIsFilterOpen(false)}>×</button>
+        </div>
+        <div style={styles.drawerContent}>
+          <AdvancedTableFilter
+            data={users}
+            onFilter={setFilteredUsers}
+            setItemsPerPage={setItemsPerPage}
+          />
+        </div>
       </div>
 
       {/* POPUP MODAL COMPONENTS */}
@@ -127,7 +195,7 @@ export default function Staff() {
         onClose={() => setIsStaffModalOpen(false)}
         onSuccess={() => {
           setIsStaffModalOpen(false);
-          fetchUsers(); // Instantly refreshes list row contents upon successful form generation
+          fetchUsers(); 
         }}
       />
     </Sidebar>
@@ -138,15 +206,13 @@ const styles = {
   container: {
     width: "100%",
     boxSizing: "border-box",
+    padding: "4px",
   },
   header: {
     display: "flex",
-    flexDirection: "row", 
     justifyContent: "space-between",
-    alignItems: "center",
     marginBottom: "20px",
-    gap: "12px",
-    flexWrap: "wrap",
+    gap: "16px",
   },
   titleSection: {
     display: "flex",
@@ -187,7 +253,7 @@ const styles = {
     background: "#6080E8",
     color: "#fff",
     border: "none",
-    padding: "8px 16px",
+    padding: "10px 16px",
     borderRadius: "6px",
     cursor: "pointer",
     fontWeight: "600",
@@ -195,18 +261,20 @@ const styles = {
     whiteSpace: "nowrap",
     boxShadow: "0 2px 4px rgba(96, 128, 232, 0.15)",
     textAlign: "center",
+    boxSizing: "border-box",
   },
   secondaryButton: {
     background: "#fff",
     color: "#475569",
     border: "1px solid #cbd5e1",
-    padding: "8px 16px",
+    padding: "10px 16px",
     borderRadius: "6px",
     cursor: "pointer",
     fontWeight: "600",
     fontSize: "13px",
     whiteSpace: "nowrap",
     textAlign: "center",
+    boxSizing: "border-box",
   },
   tableWrapper: {
     width: "100%",
@@ -216,6 +284,7 @@ const styles = {
     boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
     overflowX: "auto", 
     WebkitOverflowScrolling: "touch",
+    marginBottom: "20px"
   },
   table: {
     width: "100%",
@@ -296,5 +365,53 @@ const styles = {
     padding: "60px 20px",
     textAlign: "center",
     color: "#64748b",
+  },
+  drawerOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100vw",
+    height: "100vh",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    zIndex: 999,
+  },
+  drawer: {
+    position: "fixed",
+    top: 0,
+    right: 0,
+    height: "100vh",
+    backgroundColor: "#fff",
+    boxShadow: "-4px 0 15px rgba(0,0,0,0.1)",
+    zIndex: 1000,
+    transition: "transform 0.3s ease-in-out",
+    display: "flex",
+    flexDirection: "column",
+    boxSizing: "border-box",
+  },
+  drawerHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "20px",
+    borderBottom: "1px solid #e2e8f0",
+  },
+  drawerTitle: {
+    margin: 0,
+    fontSize: "18px",
+    fontWeight: "700",
+    color: "#1e293b",
+  },
+  closeButton: {
+    background: "none",
+    border: "none",
+    fontSize: "24px",
+    color: "#64748b",
+    cursor: "pointer",
+    lineHeight: "1",
+  },
+  drawerContent: {
+    padding: "20px",
+    overflowY: "auto",
+    flexGrow: 1,
   }
 };

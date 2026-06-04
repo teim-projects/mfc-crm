@@ -4,6 +4,7 @@ import API from "../../api";
 export default function AddPO({ isOpen, id, onClose, onSuccess }) {
   const [vendors, setVendors] = useState([]);
   const [products, setProducts] = useState([]);
+  const [replacementProducts, setReplacementProducts] = useState([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 640);
   const [formData, setFormData] = useState({
     vendor: "",
@@ -18,12 +19,16 @@ export default function AddPO({ isOpen, id, onClose, onSuccess }) {
   const [currentItem, setCurrentItem] = useState({
     product: "",
     quantity: 1,
+    replacement_qty: 0,
+    billable_qty: 1,
     unit: "PCS",
     rate: 0,
     gst_percent: 18,
     amount: 0,
     remarks: "",
   });
+
+  
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 640);
@@ -35,6 +40,7 @@ export default function AddPO({ isOpen, id, onClose, onSuccess }) {
     if (isOpen) {
       fetchVendors();
       fetchProducts();
+      
       if (id) {
         fetchPO();
       } else {
@@ -72,6 +78,9 @@ export default function AddPO({ isOpen, id, onClose, onSuccess }) {
   const fetchPO = async () => {
     try {
       const res = await API.get(`/inventory/po/${id}/`);
+      await fetchVendorDamages(
+  res.data.vendor
+);
       setFormData({
         vendor: res.data.vendor,
         po_number: res.data.po_number,
@@ -82,6 +91,13 @@ export default function AddPO({ isOpen, id, onClose, onSuccess }) {
         items: res.data.items.map((item) => ({
           product: item.product,
           quantity: item.quantity,
+          replacement_qty: item.replacement_qty || 0,
+          billable_qty:
+  item.billable_qty ??
+  (
+    item.quantity -
+    (item.replacement_qty || 0)
+  ),
           unit: item.unit,
           rate: item.rate,
           gst_percent: item.gst_percent,
@@ -94,24 +110,120 @@ export default function AddPO({ isOpen, id, onClose, onSuccess }) {
     }
   };
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
+
+  const fetchVendorDamages = async (
+  vendorId
+) => {
+
+  if (!vendorId) {
+
+    setReplacementProducts([]);
+
+    return;
+  }
+
+  try {
+
+    const res = await API.get(
+      `/inventory/vendor-replacements/?vendor_id=${vendorId}`
+    );
+
+    setReplacementProducts(
+      res.data
+    );
+
+  } catch (err) {
+
+    console.log(err);
+
+  }
+};
+
+  const handleChange = (e) => {
+
+  const {
+    name,
+    value
+  } = e.target;
+
+  setFormData({
+    ...formData,
+    [name]: value
+  });
+
+  if (name === "vendor") {
+
+    setReplacementProducts([]);
+
+    fetchVendorDamages(
+        value
+    );
+
+}
+};
   const handleItemChange = (index, field, value) => {
     const updatedItems = [...formData.items];
     updatedItems[index][field] = value;
-    const qty = parseFloat(updatedItems[index].quantity) || 0;
-    const rate = parseFloat(updatedItems[index].rate) || 0;
-    updatedItems[index].amount = qty * rate;
+
+    const pendingQty =
+  replacementProducts.find(
+    p =>
+      p.product_id ==
+      updatedItems[index].product
+  )?.pending_qty || 0;
+
+const qty =
+  Number(updatedItems[index].quantity) || 0;
+
+let replacement =
+  Number(updatedItems[index].replacement_qty) || 0;
+
+if (replacement > pendingQty) {
+
+  replacement = pendingQty;
+
+  updatedItems[index].replacement_qty =
+    pendingQty;
+}
+
+updatedItems[index].billable_qty =
+  qty - replacement;
+    const rate = Number(updatedItems[index].rate) || 0;
+    updatedItems[index].amount = updatedItems[index].billable_qty * rate;
+
     setFormData({ ...formData, items: updatedItems });
   };
 
   const handleCurrentItemChange = (field, value) => {
     const updatedItem = { ...currentItem, [field]: value };
-    const qty = parseFloat(updatedItem.quantity) || 0;
-    const rate = parseFloat(updatedItem.rate) || 0;
-    updatedItem.amount = qty * rate;
+   const qty = Number(updatedItem.quantity) || 0;
+
+let replacement =
+  Number(updatedItem.replacement_qty) || 0;
+
+const pendingQty =
+  replacementProducts.find(
+    p => p.product_id == updatedItem.product
+  )?.pending_qty || 0;
+
+if (replacement > pendingQty) {
+
+  alert(
+    `Maximum replacement quantity is ${pendingQty}`
+  );
+
+  replacement = pendingQty;
+
+  updatedItem.replacement_qty =
+    pendingQty;
+}
+
+updatedItem.billable_qty =
+  qty - replacement;
+    const rate = Number(updatedItem.rate) || 0;
+    updatedItem.amount = updatedItem.billable_qty * rate;
+
     setCurrentItem(updatedItem);
   };
 
@@ -127,6 +239,8 @@ export default function AddPO({ isOpen, id, onClose, onSuccess }) {
     setCurrentItem({
       product: "",
       quantity: 1,
+      replacement_qty: 0,
+      billable_qty: 1,
       unit: "PCS",
       rate: 0,
       gst_percent: 18,
@@ -142,7 +256,17 @@ export default function AddPO({ isOpen, id, onClose, onSuccess }) {
     });
   };
 
-  const subtotal = formData.items.reduce((acc, item) => acc + Number(item.amount), 0);
+  const subtotal =
+  formData.items.reduce(
+    (acc, item) =>
+      acc +
+      (
+        Number(item.billable_qty || 0)
+        *
+        Number(item.rate || 0)
+      ),
+    0
+  );
   const gstTotal = formData.items.reduce((acc, item) => acc + (item.amount * item.gst_percent) / 100, 0);
   const grandTotal = subtotal + gstTotal;
 
@@ -156,10 +280,10 @@ export default function AddPO({ isOpen, id, onClose, onSuccess }) {
       const payload = { ...formData, subtotal, gst_total: gstTotal, grand_total: grandTotal };
       if (id) {
         await API.put(`/inventory/po/update/${id}/`, payload);
-        alert("PO Updated Successfully");
+        alert("PO Updated Successfully ✨");
       } else {
         await API.post("/inventory/po/create/", payload);
-        alert("PO Created Successfully");
+        alert("PO Created Successfully 🚀");
       }
       onSuccess();
     } catch (err) {
@@ -176,14 +300,18 @@ export default function AddPO({ isOpen, id, onClose, onSuccess }) {
         <div style={styles.modalHeader}>
           <div>
             <h2 style={styles.modalTitle}>{id ? "Edit Purchase Order" : "Create Purchase Order"}</h2>
-            <p style={styles.modalSubtitle}>Inbound material asset booking configurations.</p>
+            <p style={styles.modalSubtitle}>Configure outbound procurement and item asset bookings.</p>
           </div>
           <button style={styles.closeX} onClick={onClose}>&times;</button>
         </div>
 
         <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.formGrid}>
-            <div style={styles.inputGroup}>
+          {/* HEADER SECTION */}
+          <div style={{
+            ...styles.formGrid,
+            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr"
+          }}>
+            <div style={styles.inputGroup(isMobile)}>
               <label style={styles.label}>Vendor Supplier *</label>
               <select name="vendor" value={formData.vendor} onChange={handleChange} style={styles.select} required>
                 <option value="">Select Vendor</option>
@@ -193,22 +321,22 @@ export default function AddPO({ isOpen, id, onClose, onSuccess }) {
               </select>
             </div>
 
-            <div style={styles.inputGroup}>
+            <div style={styles.inputGroup(isMobile)}>
               <label style={styles.label}>PO Reference Code</label>
               <input type="text" name="po_number" value={formData.po_number} readOnly style={styles.readOnlyInput} />
             </div>
 
-            <div style={styles.inputGroup}>
+            <div style={styles.inputGroup(isMobile)}>
               <label style={styles.label}>Order Date *</label>
               <input type="date" name="po_date" value={formData.po_date} onChange={handleChange} style={styles.input} required />
             </div>
 
-            <div style={styles.inputGroup}>
+            <div style={styles.inputGroup(isMobile)}>
               <label style={styles.label}>Expected Delivery Date</label>
               <input type="date" name="delivery_date" value={formData.delivery_date} onChange={handleChange} style={styles.input} />
             </div>
 
-            <div style={{ ...styles.inputGroup, gridColumn: "span 2" }}>
+            <div style={{ ...styles.inputGroup(isMobile), gridColumn: isMobile ? "span 1" : "span 2" }}>
               <label style={styles.label}>Commercial Payment Terms</label>
               <input type="text" name="payment_terms" value={formData.payment_terms} onChange={handleChange} placeholder="e.g. Net 30, 50% Advance" style={styles.input} />
             </div>
@@ -217,73 +345,145 @@ export default function AddPO({ isOpen, id, onClose, onSuccess }) {
           {/* DYNAMIC ITEM BUILDING BLOCK */}
           <div style={styles.itemBuilderSection}>
             <span style={styles.sectionHeading}>Line Item Builder</span>
-            <div style={{
-              ...styles.builderGrid,
-              gridTemplateColumns: isMobile ? "1fr" : "2.5fr 1fr 1fr 1fr 1fr auto"
-            }}>
-              <div>
+            
+            <div style={styles.builderVerticalLayout}>
+              {/* Row 1: Product Selection */}
+              <div style={styles.builderField}>
+                <label style={styles.builderLabel}>Product Selection *</label>
                 <select
                   value={currentItem.product}
                   onChange={(e) => handleCurrentItemChange("product", e.target.value)}
                   style={styles.select}
                 >
-                  <option value="">Select Product</option>
+                  <option value="">Select Product Item</option>
                   {products.map((p) => (
                     <option key={p.id} value={p.id}>{p.product_name}</option>
                   ))}
                 </select>
               </div>
-              <div style={styles.mobileBuilderRow}>
-                <input type="number" placeholder="Qty" value={currentItem.quantity} onChange={(e) => handleCurrentItemChange("quantity", Number(e.target.value))} style={styles.input} />
-                <input type="text" placeholder="Unit" value={currentItem.unit} onChange={(e) => handleCurrentItemChange("unit", e.target.value)} style={styles.input} />
+
+              {/* Row 2: Quantities, Metrics, and Action Controls */}
+              <div style={{
+                ...styles.metricsGrid,
+                gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr 1fr 1fr"
+              }}>
+                <div style={styles.builderField}>
+                  <label style={styles.builderLabel}>Quantity</label>
+                  <input type="number" placeholder="Qty" value={currentItem.quantity} onChange={(e) => handleCurrentItemChange("quantity", Number(e.target.value))} style={styles.input} />
+                </div>
+
+                <div style={styles.builderField}>
+                  <label style={styles.builderLabel}>Replacement Qty</label>
+                  <input type="number" value={currentItem.replacement_qty} onChange={(e) => handleCurrentItemChange("replacement_qty", Number(e.target.value))} style={styles.input} />
+                </div>
+                
+                <div style={styles.builderField}>
+                  <label style={styles.builderLabel}>Billable Qty</label>
+                  <input type="number" value={currentItem.billable_qty} readOnly style={styles.readOnlyInput} />
+                </div>
+
+                <div style={styles.builderField}>
+                  <label style={styles.builderLabel}>Unit</label>
+                  <input type="text" placeholder="Unit" value={currentItem.unit} onChange={(e) => handleCurrentItemChange("unit", e.target.value)} style={styles.input} />
+                </div>
+
+                <div style={styles.builderField}>
+                  <label style={styles.builderLabel}>Rate (₹)</label>
+                  <input type="number" placeholder="Rate" value={currentItem.rate} onChange={(e) => handleCurrentItemChange("rate", Number(e.target.value))} style={styles.input} />
+                </div>
+
+                <div style={styles.builderField}>
+                  <label style={styles.builderLabel}>GST %</label>
+                  <input type="number" placeholder="GST %" value={currentItem.gst_percent} onChange={(e) => handleCurrentItemChange("gst_percent", Number(e.target.value))} style={styles.input} />
+                </div>
               </div>
-              <div style={styles.mobileBuilderRow}>
-                <input type="number" placeholder="Rate" value={currentItem.rate} onChange={(e) => handleCurrentItemChange("rate", Number(e.target.value))} style={styles.input} />
-                <input type="number" placeholder="GST %" value={currentItem.gst_percent} onChange={(e) => handleCurrentItemChange("gst_percent", Number(e.target.value))} style={styles.input} />
-              </div>
-              <button type="button" onClick={addItemToTable} style={styles.addItemBtn}>+ Add Item</button>
+
+              {/* Conditional Damaged Quantity Warning Label */}
+              {currentItem.product && (() => {
+                const damagedProduct = replacementProducts.find(p => p.product_id == currentItem.product);
+                if (!damagedProduct) return null;
+                return (
+                  <div style={styles.damagedWarning}>
+                    ⚠️ Pending Damaged Qty: {damagedProduct.pending_qty}
+                  </div>
+                );
+              })()}
+
+              <button 
+                type="button" 
+                onClick={addItemToTable} 
+                style={styles.addItemBtn}
+              >
+                + Add Item To Purchase Order
+              </button>
             </div>
           </div>
 
-          {/* TABLE SCROLLER OVERFLOW */}
+          {/* OUTLINED ITEMS TABLE */}
           <div style={styles.tableWrapper}>
             <table style={styles.itemsTable}>
               <thead>
-                <tr>
-                  <th>Item Name</th>
-                  <th style={{ width: "75px" }}>Qty</th>
-                  <th style={{ width: "70px" }}>Unit</th>
-                  <th style={{ width: "95px" }}>Rate</th>
-                  <th style={{ width: "75px" }}>GST %</th>
-                  <th>Total</th>
-                  <th style={{ textAlign: "center" }}>Act</th>
-                </tr>
-              </thead>
+  <tr>
+    <th style={styles.tableTh}>Item Name</th>
+    <th style={{ ...styles.tableTh, width: "85px" }}>Qty</th>
+    <th style={{ ...styles.tableTh, width: "115px" }}>Replacement</th>
+    <th style={{ ...styles.tableTh, width: "100px" }}>Billable</th>
+    <th style={{ ...styles.tableTh, width: "75px" }}>Unit</th>
+    <th style={{ ...styles.tableTh, width: "110px" }}>Rate</th>
+    <th style={{ ...styles.tableTh, width: "80px" }}>GST %</th>
+    <th style={{ ...styles.tableTh, width: "110px" }}>Total</th>
+    <th style={{ ...styles.tableTh, width: "50px", textAlign: "center" }}>Act</th>
+  </tr>
+</thead>
               <tbody>
-                {formData.items.map((item, idx) => {
-                  const matchingProd = products.find((p) => p.id == item.product);
-                  return (
-                    <tr key={idx}>
-                      <td style={{ fontWeight: "500" }}>{matchingProd?.product_name || "—"}</td>
-                      <td><input type="number" value={item.quantity} onChange={(e) => handleItemChange(idx, "quantity", Number(e.target.value))} style={styles.tableInlineInput} /></td>
-                      <td><input type="text" value={item.unit} onChange={(e) => handleItemChange(idx, "unit", e.target.value)} style={styles.tableInlineInput} /></td>
-                      <td><input type="number" value={item.rate} onChange={(e) => handleItemChange(idx, "rate", Number(e.target.value))} style={styles.tableInlineInput} /></td>
-                      <td><input type="number" value={item.gst_percent} onChange={(e) => handleItemChange(idx, "gst_percent", Number(e.target.value))} style={styles.tableInlineInput} /></td>
-                      <td style={{ fontWeight: "600" }}>₹{Number(item.amount || 0).toFixed(2)}</td>
-                      <td style={{ textAlign: "center" }}><button type="button" onClick={() => removeItem(idx)} style={styles.removeLineX}>&times;</button></td>
-                    </tr>
-                  );
-                })}
+                {formData.items.length > 0 ? (
+                  formData.items.map((item, idx) => {
+                    const matchingProd = products.find((p) => p.id == item.product);
+                    return (
+                      <tr key={idx} style={styles.tableTr}>
+                        <td style={styles.tableTd}>{matchingProd?.product_name || "—"}</td>
+                        <td style={styles.tableTd}>
+                          <input type="number" value={item.quantity} onChange={(e) => handleItemChange(idx, "quantity", Number(e.target.value))} style={styles.tableInlineInput} />
+                        </td>
+                        <td style={styles.tableTd}>
+                          <input type="number" value={item.replacement_qty || 0} onChange={(e) => handleItemChange(idx, "replacement_qty", Number(e.target.value))} style={styles.tableInlineInput} />
+                        </td>
+                        <td style={styles.tableTd}>
+                          <input type="number" value={item.billable_qty || 0} readOnly style={{ ...styles.tableInlineInput, background: "#f8fafc" }} />
+                        </td>
+                        <td style={styles.tableTd}>
+                          <input type="text" value={item.unit} onChange={(e) => handleItemChange(idx, "unit", e.target.value)} style={styles.tableInlineInput} />
+                        </td>
+                        <td style={styles.tableTd}>
+                          <input type="number" value={item.rate} onChange={(e) => handleItemChange(idx, "rate", Number(e.target.value))} style={styles.tableInlineInput} />
+                        </td>
+                        <td style={styles.tableTd}>
+                          <input type="number" value={item.gst_percent} onChange={(e) => handleItemChange(idx, "gst_percent", Number(e.target.value))} style={styles.tableInlineInput} />
+                        </td>
+                        <td style={{ ...styles.tableTd, fontWeight: "600", color: "#1e293b" }}>
+                          ₹{Number(item.amount || 0).toFixed(2)}
+                        </td>
+                        <td style={{ ...styles.tableTd, textAlign: "center" }}>
+                          <button type="button" onClick={() => removeItem(idx)} style={styles.removeLineX}>&times;</button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="9" style={styles.tableEmptyState}>No line items added. Use the builder above.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
 
-          {/* TOTALS SUMMARY CONTAINER */}
+          {/* TOTALS SUMMARY */}
           <div style={styles.billingSummaryBox}>
             <div style={styles.summaryLine}><span style={styles.summaryLabel}>Subtotal:</span><span style={styles.summaryVal}>₹{subtotal.toFixed(2)}</span></div>
-            <div style={styles.summaryLine}><span style={styles.summaryLabel}>Calculated GST:</span><span style={styles.summaryVal}>₹{gstTotal.toFixed(2)}</span></div>
+            <div style={styles.summaryLine}><span style={styles.summaryLabel}>Tax (GST):</span><span style={styles.summaryVal}>₹{gstTotal.toFixed(2)}</span></div>
             <div style={{ ...styles.summaryLine, borderTop: "1px dashed #cbd5e1", paddingTop: "8px", marginTop: "4px" }}>
-              <span style={{ ...styles.summaryLabel, color: "#0f172a", fontSize: "14px" }}>Grand Total:</span>
+              <span style={{ ...styles.summaryLabel, color: "#0f172a", fontSize: "14px" }}>Grand Net Total:</span>
               <span style={{ ...styles.summaryVal, color: "#6080E8", fontSize: "16px", fontWeight: "700" }}>₹{grandTotal.toFixed(2)}</span>
             </div>
           </div>
@@ -299,33 +499,59 @@ export default function AddPO({ isOpen, id, onClose, onSuccess }) {
 }
 
 const styles = {
-  overlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, padding: "20px", boxSizing: "border-box" },
-  modalCard: { background: "#fff", padding: "24px", borderRadius: "16px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)", width: "100%", maxWidth: "640px", maxHeight: "85vh", overflowY: "auto", boxSizing: "border-box" },
+  overlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, padding: "12px", boxSizing: "border-box" },
+  modalCard: { background: "#fff", padding: "24px", borderRadius: "16px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)", width: "100%", maxWidth: "850px", maxHeight: "90vh", overflowY: "auto", boxSizing: "border-box" },
   modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid #f1f5f9", paddingBottom: "14px", marginBottom: "18px" },
   modalTitle: { fontSize: "20px", fontWeight: "700", color: "#1e293b", margin: 0 },
   modalSubtitle: { fontSize: "13px", color: "#64748b", margin: 0 },
   closeX: { background: "none", border: "none", fontSize: "24px", color: "#94a3b8", cursor: "pointer", lineHeight: "1" },
   form: { display: "flex", flexDirection: "column", gap: "16px" },
-  formGrid: { display: "grid", gridTemplateColumns: window.innerWidth <= 600 ? "1fr" : "1fr 1fr", gap: "14px" },
-  inputGroup: { display: "flex", flexDirection: "column", gap: "6px", gridColumn: window.innerWidth <= 600 ? "span 2" : "initial" },
+  formGrid: { display: "grid", gap: "14px" },
+  inputGroup: (isMobile) => ({ display: "flex", flexDirection: "column", gap: "6px", gridColumn: isMobile ? "span 1" : "initial" }),
   label: { fontSize: "12px", fontWeight: "600", color: "#475569" },
   input: { padding: "10px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none", color: "#334155", width: "100%", boxSizing: "border-box" },
   select: { padding: "10px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none", color: "#334155", width: "100%", boxSizing: "border-box", background: "#fff", cursor: "pointer" },
-  readOnlyInput: { padding: "10px 12px", borderRadius: "6px", border: "1px solid #e2e8f0", background: "#f8fafc", color: "#64748b", fontSize: "14px", outline: "none", fontFamily: "monospace" },
-  itemBuilderSection: { background: "#f8fafc", padding: "16px", borderRadius: "8px", border: "1px solid #e2e8f0" },
-  sectionHeading: { display: "block", fontSize: "12px", fontWeight: "700", color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "12px" },
-  builderGrid: { display: "flex", flexDirection: "column", gap: "10px" },
-  mobileBuilderRow: { display: "flex", gap: "10px", width: "100%" },
-  addItemBtn: { background: "#6080E8", color: "#fff", border: "none", padding: "10px 14px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px", width: "100%", boxSizing: "border-box", textAlign: "center" },
+  readOnlyInput: { padding: "10px 12px", borderRadius: "6px", border: "1px solid #e2e8f0", background: "#f8fafc", color: "#64748b", fontSize: "14px", outline: "none", fontFamily: "monospace", boxSizing: "border-box", width: "100%" },
+  
+  /* BUILDER SECTION RESTRUCTURED */
+  itemBuilderSection: { background: "#f8fafc", padding: "16px", borderRadius: "10px", border: "1px solid #e2e8f0" },
+  sectionHeading: { display: "block", fontSize: "12px", fontWeight: "700", color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "14px" },
+  builderVerticalLayout: { display: "flex", flexDirection: "column", gap: "14px" },
+  metricsGrid: { display: "grid", gap: "12px", width: "100%" },
+  builderField: { display: "flex", flexDirection: "column", gap: "6px" },
+  builderLabel: { fontSize: "11px", fontWeight: "600", color: "#64748b" },
+  addItemBtn: { background: "#6080E8", color: "#fff", border: "none", padding: "10px 14px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px", width: "100%", boxSizing: "border-box", textAlign: "center", minHeight: "40px" },
+  damagedWarning: { color: "#dc2626", fontWeight: "600", fontSize: "12px", background: "#fef2f2", padding: "8px 12px", borderRadius: "6px", border: "1px dashed #fca5a5" },
+  
+  /* TABLE DESIGN SYSTEM */
   tableWrapper: { width: "100%", overflowX: "auto", background: "#fff", borderRadius: "8px", border: "1px solid #e2e8f0", WebkitOverflowScrolling: "touch" },
-  itemsTable: { width: "100%", borderCollapse: "collapse", minWidth: "600px", textAlign: "left" },
-  tableInlineInput: { width: "100%", padding: "6px", border: "1px solid #cbd5e1", borderRadius: "4px", fontSize: "13px", boxSizing: "border-box" },
-  removeLineX: { background: "none", border: "none", color: "#ef4444", fontSize: "18px", cursor: "pointer", padding: "0 4px" },
-  billingSummaryBox: { marginLeft: "auto", width: "100%", maxWidth: "260px", display: "flex", flexDirection: "column", gap: "6px", background: "#f8fafc", padding: "12px", borderRadius: "8px", border: "1px solid #edf2f7" },
+  itemsTable: { 
+    width: "100%", 
+    borderCollapse: "collapse", 
+    minWidth: "900px", /* Increased min-width to give columns more breathing room */
+    textAlign: "left" 
+  },
+  tableTh: { background: "#f8fafc", padding: "10px 14px", fontSize: "11px", fontWeight: "700", color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #e2e8f0", whiteSpace: "nowrap" },
+  tableTr: { borderBottom: "1px solid #f1f5f9" },
+  tableTd: { padding: "10px 14px", fontSize: "13.5px", color: "#475569", verticalAlign: "middle" },
+  tableInlineInput: { 
+    width: "100%", 
+    padding: "6px 4px", /* Reduced horizontal padding from 8px to 4px to prevent cutoffs */
+    border: "1px solid #cbd5e1", 
+    borderRadius: "4px", 
+    fontSize: "13px", 
+    boxSizing: "border-box", 
+    outline: "none",
+    textAlign: "center" /* Centers numbers so they remain fully visible */
+  },
+  tableEmptyState: { padding: "24px", textAlign: "center", color: "#94a3b8", fontSize: "13px" },
+  
+  removeLineX: { background: "none", border: "none", color: "#ef4444", fontSize: "20px", cursor: "pointer", padding: "0 4px", lineHeight: "1" },
+  billingSummaryBox: { marginLeft: "auto", width: "100%", maxWidth: "280px", display: "flex", flexDirection: "column", gap: "6px", background: "#f8fafc", padding: "12px", borderRadius: "8px", border: "1px solid #edf2f7", boxSizing: "border-box" },
   summaryLine: { display: "flex", justifyContent: "space-between", alignItems: "center" },
   summaryLabel: { fontSize: "13px", color: "#64748b", fontWeight: "500" },
   summaryVal: { fontSize: "13px", color: "#1e293b", fontWeight: "600" },
-  footerActions: { display: "flex", gap: "12px", justifyContent: "flex-end", borderTop: "1px solid #f1f5f9", paddingTop: "14px" },
+  footerActions: { display: "flex", gap: "12px", justifyContent: "flex-end", borderTop: "1px solid #f1f5f9", paddingTop: "14px", marginTop: "10px" },
   cancelBtn: { background: "#fff", color: "#475569", border: "1px solid #cbd5e1", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px" },
   submitBtn: { background: "#16a34a", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px" }
 };

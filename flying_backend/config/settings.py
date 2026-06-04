@@ -26,6 +26,8 @@ SECRET_KEY = 'django-insecure-m895$e=ed6#($tzyf+r-_7%+bpke$tge6m_xlcf$9m!i(e-vl^
 DEBUG = True
 
 ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
     "91.99.119.240",
     "mfc-crm.calculination.com",
     "www.mfc-crm.calculination.com"
@@ -46,7 +48,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'info',
     'accounts',
-    'inventory'
+    'inventory',
+    'billing'
 ]
 
 MIDDLEWARE = [

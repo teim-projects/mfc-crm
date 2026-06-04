@@ -37,6 +37,10 @@ urlpatterns = [
     path("grn/<int:pk>/", GRNDetailView.as_view()),
     path("grn/update/<int:pk>/", GRNUpdateView.as_view()),
     path("grn/delete/<int:pk>/", GRNDeleteView.as_view()),
+    path("stock/",StockListView.as_view()),
+    path( "stock-transactions/", StockTransactionListView.as_view()),
+    path("vendor-replacements/",VendorReplacementView.as_view()),
+    
     
 
     

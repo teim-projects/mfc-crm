@@ -163,3 +163,80 @@ class Student(models.Model):
     def __str__(self):
 
         return self.student_name
+
+
+
+class StudentEnrollment(models.Model):
+
+    STATUS_CHOICES = (
+
+        ("active", "Active"),
+
+        ("completed", "Completed"),
+
+        ("promoted", "Promoted"),
+
+        ("dropped", "Dropped"),
+    )
+
+    student = models.ForeignKey(
+
+        Student,
+
+        on_delete=models.CASCADE,
+
+        related_name="enrollments"
+    )
+
+    school = models.ForeignKey(
+
+        School,
+
+        on_delete=models.CASCADE
+    )
+
+    course = models.ForeignKey(
+
+        Course,
+
+        on_delete=models.CASCADE
+    )
+
+    enrolled_date = models.DateField(
+        auto_now_add=True
+    )
+
+    completed_date = models.DateField(
+
+        null=True,
+
+        blank=True
+    )
+
+    status = models.CharField(
+
+        max_length=20,
+
+        choices=STATUS_CHOICES,
+
+        default="active"
+    )
+
+    remarks = models.TextField(
+
+        blank=True,
+
+        null=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+
+        return (
+            f"{self.student.student_name}"
+            f" - "
+            f"{self.course}"
+        )

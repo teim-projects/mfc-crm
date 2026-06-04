@@ -3,12 +3,21 @@ from rest_framework.permissions import IsAuthenticated
 
 from .models import Product 
 from .serializers import ProductSerializer
+from .models import (
+    Stock,
+    StockTransaction
+)
 
+from .serializers import (
+    StockSerializer,
+    StockTransactionSerializer
+)
 
 
 from .models import (
     Vendor,
-    PurchaseOrder
+    PurchaseOrder,
+    VendorDamagedStock
 )
 
 from .serializers import (
@@ -266,3 +275,123 @@ class GRNDeleteView(
     serializer_class = GRNSerializer
 
     permission_classes = [IsAuthenticated]
+
+
+from .models import Stock
+from .serializers import StockSerializer
+
+
+class StockListView(
+    generics.ListAPIView
+):
+
+    queryset = (
+        Stock.objects
+        .select_related(
+            "product",
+            "product__course"
+        )
+        .order_by(
+            "product__product_name"
+        )
+    )
+
+    serializer_class = (
+        StockSerializer
+    )
+
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+
+class StockTransactionListView(
+    generics.ListAPIView
+):
+
+    queryset = (
+        StockTransaction.objects
+        .select_related("product")
+        .order_by("-created_at")
+    )
+
+    serializer_class = (
+        StockTransactionSerializer
+    )
+
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+
+# class ProductReplacementView(APIView):
+
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+
+#         data = []
+
+#         stocks = (
+#             Stock.objects
+#             .select_related("product")
+#             .filter(
+#                 damaged_stock__gt=0
+#             )
+#         )
+
+#         for stock in stocks:
+
+#             data.append({
+#                 "product_id": stock.product.id,
+#                 "product_name": stock.product.product_name,
+#                 "damaged_qty": stock.damaged_stock
+#             })
+
+#         return Response(data)
+
+
+class VendorReplacementView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        vendor_id = request.GET.get(
+            "vendor_id"
+        )
+
+        data = []
+
+        replacements = (
+            VendorDamagedStock.objects
+            .filter(
+                vendor_id=vendor_id
+            )
+        )
+
+        for row in replacements:
+
+            pending_qty = (
+                row.total_damaged_qty -
+                row.settled_qty
+            )
+
+            if pending_qty > 0:
+
+                data.append({
+                    "product_id":
+                        row.product.id,
+
+                    "product_name":
+                        row.product.product_name,
+
+                    "pending_qty":
+                        pending_qty
+                })
+
+        return Response(data)
+

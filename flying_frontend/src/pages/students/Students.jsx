@@ -3,18 +3,32 @@ import { useParams } from "react-router-dom";
 import API from "../../api";
 import Sidebar from "../../components/Sidebar";
 import AddStudent from "./AddStudent";
+import Pagination from "../../components/Pagination";
+import AdvancedTableFilter from "../../components/AdvancedTableFilter";
 
 export default function Students() {
   const { schoolId } = useParams();
   const [students, setStudents] = useState([]);
+  const [filteredStudents, setFilteredStudents] = useState([]);
+  const [itemsPerPage, setItemsPerPage] = useState(8);
+  const [currentPage, setCurrentPage] = useState(1);
+
   const [school, setSchool] = useState(null);
-  
   const [modalOpen, setModalOpen] = useState(false);
-  const [targetStudentId, setTargetStudentId] = useState(null);
+  const [targetStudentId, setTargetStudentId] = useState(null); // Managed variable state
+  const [isFilterOpen, setIsFilterOpen] = useState(false); 
+
+  const [windowWidth, setWindowWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1200
+  );
 
   useEffect(() => {
     fetchSchool();
     fetchStudents();
+
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [schoolId]);
 
   const fetchSchool = async () => {
@@ -30,6 +44,7 @@ export default function Students() {
     try {
       const res = await API.get(`/info/students/?school=${schoolId}`);
       setStudents(res.data);
+      setFilteredStudents(res.data);
     } catch (err) {
       console.log(err);
     }
@@ -66,11 +81,24 @@ export default function Students() {
     }
   };
 
+  // =====================================
+  // PAGINATION
+  // =====================================
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedStudents = filteredStudents.slice(startIndex, startIndex + itemsPerPage);
+
+  const isMobile = windowWidth <= 640;
+
   return (
     <Sidebar>
       <div style={styles.container}>
         {/* HEADER SECTION */}
-        <div style={styles.header}>
+        <div style={{
+          ...styles.header,
+          flexDirection: isMobile ? "column" : "row",
+          alignItems: isMobile ? "stretch" : "center"
+        }}>
           <div style={styles.titleSection}>
             <div style={styles.headingWrapper}>
               <div style={styles.verticalLine}></div>
@@ -81,9 +109,24 @@ export default function Students() {
             </p>
           </div>
 
-          <button style={styles.primaryButton} onClick={handleOpenAddModal}>
-            + Add Student
-          </button>
+          <div style={{
+            ...styles.buttonGroup,
+            flexDirection: isMobile ? "column" : "row",
+            width: isMobile ? "100%" : "auto"
+          }}>
+            <button 
+              style={{ ...styles.secondaryButton, width: isMobile ? "100%" : "auto" }} 
+              onClick={() => setIsFilterOpen(true)}
+            >
+              🔍 Filter
+            </button>
+            <button 
+              style={{ ...styles.primaryButton, width: isMobile ? "100%" : "auto" }} 
+              onClick={handleOpenAddModal}
+            >
+              + Add Student
+            </button>
+          </div>
         </div>
 
         {/* DATA SHEET LAYER CONTAINER */}
@@ -101,7 +144,7 @@ export default function Students() {
                 </tr>
               </thead>
               <tbody>
-                {students.map((student) => (
+                {paginatedStudents.map((student) => (
                   <tr key={student.id} style={styles.tr}>
                     <td style={{ ...styles.td, fontWeight: "600", color: "#1e293b" }}>
                       <div style={styles.nameSection}>
@@ -122,15 +165,19 @@ export default function Students() {
                     <td style={styles.td}>{student.parent_name || "—"}</td>
                     <td style={styles.td}>{student.parent_contact || "—"}</td>
                     <td style={styles.td}>
-                      <div style={styles.actionButtonGroup}>
+                      <div style={{
+                        ...styles.actionButtonGroup,
+                        flexDirection: isMobile ? "column" : "row",
+                        gap: isMobile ? "8px" : "6px"
+                      }}>
                         <button
-                          style={styles.editBtn}
+                          style={{ ...styles.editBtn, width: isMobile ? "100%" : "auto" }}
                           onClick={() => handleOpenEditModal(student.id)}
                         >
                           Edit
                         </button>
                         <button
-                          style={styles.deleteBtn}
+                          style={{ ...styles.deleteBtn, width: isMobile ? "100%" : "auto" }}
                           onClick={() => deleteStudent(student.id)}
                         >
                           Delete
@@ -146,6 +193,34 @@ export default function Students() {
               <p>No student enrollment sheets match this academy index reference yet.</p>
             </div>
           )}
+        </div>
+        
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      </div>
+
+      {/* FILTER SLIDING SIDEBAR DRAWER PANEL */}
+      {isFilterOpen && (
+        <div style={styles.drawerOverlay} onClick={() => setIsFilterOpen(false)} />
+      )}
+      <div style={{
+        ...styles.drawer,
+        width: isMobile ? "100%" : "360px",
+        transform: isFilterOpen ? "translateX(0)" : "translateX(100%)"
+      }}>
+        <div style={styles.drawerHeader}>
+          <h3 style={styles.drawerTitle}>Filters</h3>
+          <button style={styles.closeButton} onClick={() => setIsFilterOpen(false)}>×</button>
+        </div>
+        <div style={styles.drawerContent}>
+          <AdvancedTableFilter
+            data={students}
+            onFilter={setFilteredStudents}
+            setItemsPerPage={setItemsPerPage}
+          />
         </div>
       </div>
 
@@ -165,15 +240,13 @@ const styles = {
   container: {
     width: "100%",
     boxSizing: "border-box",
+    padding: "4px",
   },
   header: {
     display: "flex",
-    flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
     marginBottom: "20px",
-    gap: "12px",
-    flexWrap: "wrap",
+    gap: "16px",
   },
   titleSection: {
     display: "flex",
@@ -205,11 +278,16 @@ const styles = {
     margin: 0,
     paddingLeft: "14px",
   },
+  buttonGroup: {
+    display: "flex",
+    gap: "10px",
+    alignItems: "center",
+  },
   primaryButton: {
     background: "#6080E8",
     color: "#fff",
     border: "none",
-    padding: "8px 16px",
+    padding: "10px 16px",
     borderRadius: "6px",
     cursor: "pointer",
     fontWeight: "600",
@@ -217,6 +295,20 @@ const styles = {
     whiteSpace: "nowrap",
     boxShadow: "0 2px 4px rgba(96, 128, 232, 0.15)",
     textAlign: "center",
+    boxSizing: "border-box",
+  },
+  secondaryButton: {
+    background: "#fff",
+    color: "#475569",
+    border: "1px solid #cbd5e1",
+    padding: "10px 16px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "600",
+    fontSize: "13px",
+    whiteSpace: "nowrap",
+    textAlign: "center",
+    boxSizing: "border-box",
   },
   tableWrapper: {
     width: "100%",
@@ -226,11 +318,12 @@ const styles = {
     boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
     overflowX: "auto",
     WebkitOverflowScrolling: "touch",
+    marginBottom: "20px"
   },
   table: {
     width: "100%",
     borderCollapse: "collapse",
-    minWidth: "850px", // Maintains perfect full line row parameters across dynamic displays
+    minWidth: "850px",
   },
   th: {
     background: "#f8fafc",
@@ -280,6 +373,7 @@ const styles = {
     borderRadius: "4px",
     fontSize: "12px",
     fontWeight: "600",
+    display: "inline-block"
   },
   levelMarker: {
     color: "#475569",
@@ -288,7 +382,6 @@ const styles = {
   },
   actionButtonGroup: {
     display: "flex",
-    gap: "6px",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -296,25 +389,75 @@ const styles = {
     background: "#fff",
     color: "#6080E8",
     border: "1px solid #6080E8",
-    padding: "5px 12px",
+    padding: "6px 12px",
     borderRadius: "6px",
     cursor: "pointer",
     fontWeight: "600",
     fontSize: "12px",
+    boxSizing: "border-box",
   },
   deleteBtn: {
     background: "#ef4444",
     color: "#fff",
     border: "none",
-    padding: "5px 12px",
+    padding: "6px 12px",
     borderRadius: "6px",
     cursor: "pointer",
     fontWeight: "600",
     fontSize: "12px",
+    boxSizing: "border-box",
   },
   emptyState: {
     padding: "60px 20px",
     textAlign: "center",
     color: "#64748b",
   },
+  drawerOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100vw",
+    height: "100vh",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    zIndex: 999,
+  },
+  drawer: {
+    position: "fixed",
+    top: 0,
+    right: 0,
+    height: "100vh",
+    backgroundColor: "#fff",
+    boxShadow: "-4px 0 15px rgba(0,0,0,0.1)",
+    zIndex: 1000,
+    transition: "transform 0.3s ease-in-out",
+    display: "flex",
+    flexDirection: "column",
+    boxSizing: "border-box",
+  },
+  drawerHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "20px",
+    borderBottom: "1px solid #e2e8f0",
+  },
+  drawerTitle: {
+    margin: 0,
+    fontSize: "18px",
+    fontWeight: "700",
+    color: "#1e293b",
+  },
+  closeButton: {
+    background: "none",
+    border: "none",
+    fontSize: "24px",
+    color: "#64748b",
+    cursor: "pointer",
+    lineHeight: "1",
+  },
+  drawerContent: {
+    padding: "20px",
+    overflowY: "auto",
+    flexGrow: 1,
+  }
 };
