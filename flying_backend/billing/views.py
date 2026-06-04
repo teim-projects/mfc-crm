@@ -107,14 +107,29 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 
+from billing.models import StudentReceipt
+from info.models import Student
+
 class StudentsBySchoolView(APIView):
 
     permission_classes = [IsAuthenticated]
 
     def get(self, request, school_id):
 
+        receipt_student_ids = (
+            StudentReceipt.objects
+            .filter(
+                school_id=school_id
+            )
+            .values_list(
+                "student_id",
+                flat=True
+            )
+            .distinct()
+        )
+
         students = Student.objects.filter(
-            school_id=school_id
+            id__in=receipt_student_ids
         )
 
         data = []
@@ -122,10 +137,27 @@ class StudentsBySchoolView(APIView):
         for student in students:
 
             data.append({
+
                 "id": student.id,
-                "student_name": student.student_name,
-                "parent_name": student.parent_name,
-                "parent_contact": student.parent_contact,
+
+                "student_name":
+                student.student_name,
+
+                "parent_name":
+                student.parent_name,
+
+                "parent_contact":
+                student.parent_contact,
+
+                "course":
+                student.course.id,
+
+                "course_name":
+                student.course.course_type,
+
+                "level":
+                student.level,
+
             })
 
         return Response(data)

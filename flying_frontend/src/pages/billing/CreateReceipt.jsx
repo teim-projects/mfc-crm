@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import API from "../../api";
 
 export default function CreateReceipt({ isOpen, schoolId, studentId, onClose, onSuccess }) {
@@ -11,6 +11,12 @@ export default function CreateReceipt({ isOpen, schoolId, studentId, onClose, on
   const [showProductDropdown, setShowProductDropdown] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 640);
   const [isNewStudent, setIsNewStudent] = useState(false);
+  
+  // Custom course sub-category filtering tab state
+  const [productCourseType, setProductCourseType] = useState("all"); 
+
+  // 🌟 Added: Secure DOM node reference to isolate search bounds and prevent modal click-leaks
+  const searchContainerRef = useRef(null);
 
   const [formData, setFormData] = useState({
     school: "",
@@ -40,6 +46,17 @@ export default function CreateReceipt({ isOpen, schoolId, studentId, onClose, on
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // 🌟 Added: Click-Away Listener to close search menu without affecting layout bubbling
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+        setShowProductDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
   // Reset form states cleanly when modal context updates
   useEffect(() => {
     if (isOpen) {
@@ -59,6 +76,7 @@ export default function CreateReceipt({ isOpen, schoolId, studentId, onClose, on
       });
       setIsNewStudent(false);
       setSearchProduct("");
+      setProductCourseType("all");
       setCurrentItem({
         product: "",
         product_id: "",
@@ -78,19 +96,25 @@ export default function CreateReceipt({ isOpen, schoolId, studentId, onClose, on
     }
   }, [formData.school, isNewStudent]);
 
+  // Unified Product Filter Logic (handles both typing queries and course tab selection)
   useEffect(() => {
+    let result = [...products];
+
+    // 1. Filter by Course Category Tab if selected
+    if (productCourseType !== "all") {
+      result = result.filter(p => p.course_type === productCourseType);
+    }
+
+    // 2. Filter by typing search query input
     if (searchProduct) {
-      const filtered = products.filter(product =>
+      result = result.filter(product =>
         product.product_name.toLowerCase().includes(searchProduct.toLowerCase()) ||
         product.product_code?.toLowerCase().includes(searchProduct.toLowerCase())
       );
-      setFilteredProducts(filtered);
-      setShowProductDropdown(true);
-    } else {
-      setFilteredProducts([]);
-      setShowProductDropdown(false);
     }
-  }, [searchProduct, products]);
+
+    setFilteredProducts(result);
+  }, [searchProduct, productCourseType, products]);
 
   const fetchSchools = async () => {
     try {
@@ -231,38 +255,31 @@ export default function CreateReceipt({ isOpen, schoolId, studentId, onClose, on
       return;
     }
 
-    let payload;
+    let payload = {
+      school: formData.school,
+      receipt_date: formData.receipt_date,
+      discount: parseFloat(formData.discount) || 0,
+      remarks: formData.remarks,
+      items: formData.items.map(item => ({
+        product: item.product,
+        quantity: item.quantity,
+        rate: item.rate,
+        unit: item.unit,
+        remarks: "",
+      })),
+    };
+
     if (isNewStudent) {
       payload = {
-        school: formData.school,
+        ...payload,
         student_name_input: formData.student_name_input,
         parent_name: formData.parent_name || "",
         parent_contact_input: formData.parent_contact_input || "",
-        receipt_date: formData.receipt_date,
-        discount: parseFloat(formData.discount) || 0,
-        remarks: formData.remarks,
-        items: formData.items.map(item => ({
-          product: item.product,
-          quantity: item.quantity,
-          rate: item.rate,
-          unit: item.unit,
-          remarks: "",
-        })),
       };
     } else {
       payload = {
-        school: formData.school,
+        ...payload,
         student: formData.student,
-        receipt_date: formData.receipt_date,
-        discount: parseFloat(formData.discount) || 0,
-        remarks: formData.remarks,
-        items: formData.items.map(item => ({
-          product: item.product,
-          quantity: item.quantity,
-          rate: item.rate,
-          unit: item.unit,
-          remarks: "",
-        })),
       };
     }
 
@@ -304,12 +321,7 @@ export default function CreateReceipt({ isOpen, schoolId, studentId, onClose, on
             }}>
               <div style={styles.formGroup}>
                 <label style={styles.label}>School *</label>
-                <select
-                  style={styles.select}
-                  value={formData.school}
-                  onChange={handleSchoolChange}
-                  required
-                >
+                <select style={styles.select} value={formData.school} onChange={handleSchoolChange} required>
                   <option value="">Select School</option>
                   {schools.map(school => (
                     <option key={school.id} value={school.id}>{school.school_name}</option>
@@ -319,13 +331,7 @@ export default function CreateReceipt({ isOpen, schoolId, studentId, onClose, on
 
               <div style={styles.formGroup}>
                 <label style={styles.label}>Student Type *</label>
-                <select
-                  style={styles.select}
-                  value={isNewStudent ? "new" : "existing"}
-                  onChange={handleStudentTypeChange}
-                  disabled={!formData.school}
-                  required
-                >
+                <select style={styles.select} value={isNewStudent ? "new" : "existing"} onChange={handleStudentTypeChange} disabled={!formData.school} required>
                   <option value="existing">Select Existing Student</option>
                   <option value="new">Create New Student</option>
                 </select>
@@ -389,135 +395,123 @@ export default function CreateReceipt({ isOpen, schoolId, studentId, onClose, on
 
               <div style={styles.formGroup}>
                 <label style={styles.label}>Receipt Date *</label>
-                <input
-                  type="date"
-                  style={styles.input}
-                  value={formData.receipt_date}
-                  onChange={(e) => setFormData(prev => ({ ...prev, receipt_date: e.target.value }))}
-                  required
-                />
+                <input type="date" style={styles.input} value={formData.receipt_date} onChange={(e) => setFormData(prev => ({ ...prev, receipt_date: e.target.value }))} required />
               </div>
 
               <div style={styles.formGroup}>
                 <label style={styles.label}>Discount (₹)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  style={styles.input}
-                  value={formData.discount}
-                  onChange={(e) => setFormData(prev => ({ ...prev, discount: e.target.value }))}
-                />
+                <input type="number" step="0.01" style={styles.input} value={formData.discount} onChange={(e) => setFormData(prev => ({ ...prev, discount: e.target.value }))} />
               </div>
             </div>
           </div>
 
-          {/* ADD STOCK ITEMS */}
+          {/* ADVANCED SMART SELECTION BUILDER BLOCK */}
           <div style={styles.section}>
             <h3 style={styles.sectionTitle}>Add Items</h3>
             <div style={styles.itemAddSection}>
-              <div style={styles.productSearchWrapper}>
-                <label style={styles.label}>Product Search *</label>
+              
+              {/* 🌟 Attached searchContainerRef to safely contain search focus clicks */}
+              <div ref={searchContainerRef} style={styles.productSearchWrapper}>
+                <div style={styles.searchBarLabelRow}>
+                  <label style={styles.label}>Search Product Inventory *</label>
+                  
+                  {/* Category Fast Switcher Segments */}
+                  <div style={styles.tabContainer}>
+                    <button type="button" onClick={() => setProductCourseType("all")} style={productCourseType === "all" ? styles.activeTab : styles.tab}>All</button>
+                    <button type="button" onClick={() => setProductCourseType("abacus")} style={productCourseType === "abacus" ? styles.activeTab : styles.tab}>Abacus</button>
+                    <button type="button" onClick={() => setProductCourseType("vedic_maths")} style={productCourseType === "vedic_maths" ? styles.activeTab : styles.tab}>Vedic Maths</button>
+                  </div>
+                </div>
+
                 <input
                   type="text"
                   style={styles.input}
-                  placeholder="Search product by name or code..."
+                  placeholder={productCourseType === "all" ? "Search anything (e.g. bag, abacus kit, book...)" : `Search within ${productCourseType === "abacus" ? "Abacus" : "Vedic Maths"} inventory...`}
                   value={searchProduct}
                   onChange={(e) => setSearchProduct(e.target.value)}
-                  onFocus={() => searchProduct && setShowProductDropdown(true)}
+                  onFocus={() => setShowProductDropdown(true)}
                 />
-                {showProductDropdown && filteredProducts.length > 0 && (
+                
+                {/* Search Dropdown Context List Overlay */}
+                {showProductDropdown && (
                   <div style={styles.productDropdown}>
-                    {filteredProducts.map(product => (
-                      <div
-                        key={product.id}
-                        style={styles.productDropdownItem}
-                        onClick={() => handleProductSelect(product)}
-                      >
-                        <div>
-                          <div style={styles.productName}>{product.product_name}</div>
-                          <div style={styles.productCode}>{product.product_code}</div>
+                    {filteredProducts.length > 0 ? (
+                      filteredProducts.map(product => (
+                        <div
+                          key={product.id}
+                          style={styles.productDropdownItem}
+                          onClick={() => handleProductSelect(product)}
+                        >
+                          <div style={styles.productMetaLeft}>
+                            <div style={styles.productName}>{product.product_name}</div>
+                            <div style={styles.productSubtitleRow}>
+                              <span style={styles.productCode}>{product.product_code || "No-Code"}</span>
+                              <span style={styles.dropdownBadge}>
+                                {product.course_type === "vedic_maths" ? "Vedic" : product.course_type === "abacus" ? "Abacus" : "General"}
+                              </span>
+                              {product.course_level && <span style={{...styles.dropdownBadge, background: "#f1f5f9", color: "#475569"}}>Lvl {product.course_level}</span>}
+                            </div>
+                          </div>
+                          <div style={styles.productPrice}>₹{Number(product.unit_price || 0).toFixed(2)}</div>
                         </div>
-                        <div style={styles.productPrice}>₹{product.unit_price}</div>
+                      ))
+                    ) : (
+                      <div style={styles.dropdownEmptyState}>
+                        No inventory matches found under the "{productCourseType.toUpperCase()}" tab.
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
               </div>
 
+              {/* Sizing Quantities & Pricing Metrics */}
               <div style={{
                 ...styles.itemRow,
                 gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr"
               }}>
                 <div style={styles.itemField}>
                   <label style={styles.label}>Quantity</label>
-                  <input
-                    type="number"
-                    style={styles.input}
-                    value={currentItem.quantity}
-                    onChange={(e) => setCurrentItem(prev => ({ ...prev, quantity: parseInt(e.target.value) || 0 }))}
-                    min="1"
-                  />
+                  <input type="number" style={styles.input} value={currentItem.quantity} onChange={(e) => setCurrentItem(prev => ({ ...prev, quantity: parseInt(e.target.value) || 0 }))} min="1" />
                 </div>
 
                 <div style={styles.itemField}>
                   <label style={styles.label}>Rate (₹)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    style={styles.input}
-                    value={currentItem.rate}
-                    onChange={(e) => setCurrentItem(prev => ({ ...prev, rate: parseFloat(e.target.value) || 0 }))}
-                  />
+                  <input type="number" step="0.01" style={styles.input} value={currentItem.rate} onChange={(e) => setCurrentItem(prev => ({ ...prev, rate: parseFloat(e.target.value) || 0 }))} />
                 </div>
 
                 <div style={styles.itemField}>
                   <label style={styles.label}>Available Stock</label>
-                  <input
-                    type="text"
-                    style={{ ...styles.input, backgroundColor: "#f8fafc", fontFamily: "monospace" }}
-                    value={currentItem.available_stock}
-                    readOnly
-                  />
+                  <input type="text" style={{ ...styles.input, backgroundColor: "#f8fafc", fontFamily: "monospace", fontWeight: "600" }} value={currentItem.product_id ? `${currentItem.available_stock} Units` : "—"} readOnly />
                 </div>
               </div>
 
-              <button
-                type="button"
-                style={{ ...styles.addButton, marginTop: "12px" }}
-                onClick={handleAddItem}
-              >
-                + Add Item Rule
+              <button type="button" style={{ ...styles.addButton, marginTop: "4px" }} onClick={handleAddItem}>
+                + Add Selected Item
               </button>
             </div>
 
-            {/* Items Table */}
+            {/* OUTLINED GRID SHEET */}
             {formData.items.length > 0 && (
               <div style={styles.itemsTableWrapper}>
                 <table style={styles.itemsTable}>
                   <thead>
                     <tr>
-                      <th style={styles.tableTh}>Product</th>
-                      <th style={{ ...styles.tableTh, width: "70px", textAlign: "center" }}>Qty</th>
-                      <th style={{ ...styles.tableTh, width: "100px" }}>Rate</th>
-                      <th style={{ ...styles.tableTh, width: "110px" }}>Amount</th>
-                      <th style={{ ...styles.tableTh, width: "50px", textAlign: "center" }}>Action</th>
+                      <th style={styles.tableTh}>Product Specifications</th>
+                      <th style={{ ...styles.tableTh, width: "75px", textAlign: "center" }}>Qty</th>
+                      <th style={{ ...styles.tableTh, width: "100px" }}>Unit Rate</th>
+                      <th style={{ ...styles.tableTh, width: "110px" }}>Net Total</th>
+                      <th style={{ ...styles.tableTh, width: "55px", textAlign: "center" }}>Act</th>
                     </tr>
                   </thead>
                   <tbody>
                     {formData.items.map(item => (
                       <tr key={item.id} style={styles.tableTr}>
-                        <td style={styles.tableTd}>{item.product_name}</td>
-                        <td style={{ ...styles.tableTd, textAlign: "center", fontWeight: "600" }}>{item.quantity}</td>
-                        <td style={styles.tableTd}>₹{item.rate.toFixed(2)}</td>
-                        <td style={{ ...styles.tableTd, fontWeight: "600" }}>₹{item.amount.toFixed(2)}</td>
+                        <td style={{ ...styles.tableTd, fontWeight: "600", color: "#1e293b" }}>{item.product_name}</td>
+                        <td style={{ ...styles.tableTd, textAlign: "center", fontWeight: "700", color: "#475569" }}>{item.quantity}</td>
+                        <td style={styles.tableTd}>₹{item.rate.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                        <td style={{ ...styles.tableTd, fontWeight: "700", color: "#0f172a" }}>₹{item.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                         <td style={{ ...styles.tableTd, textAlign: "center" }}>
-                          <button
-                            type="button"
-                            style={styles.removeButton}
-                            onClick={() => handleRemoveItem(item.id)}
-                          >
-                            &times;
-                          </button>
+                          <button type="button" style={styles.removeButton} onClick={() => handleRemoveItem(item.id)}>&times;</button>
                         </td>
                       </tr>
                     ))}
@@ -527,35 +521,29 @@ export default function CreateReceipt({ isOpen, schoolId, studentId, onClose, on
             )}
           </div>
 
-          {/* SUMMARY */}
+          {/* NET CALCULATIONS DISPLAY BLOCK */}
           <div style={styles.summaryBox}>
             <div style={styles.summaryRow}>
-              <span>Subtotal:</span>
-              <strong>₹{subtotal.toFixed(2)}</strong>
+              <span style={styles.summaryLabel}>Subtotal Gross:</span>
+              <span style={styles.summaryVal}>₹{subtotal.toFixed(2)}</span>
             </div>
             <div style={styles.summaryRow}>
-              <span>Discount:</span>
-              <strong style={{ color: "#ef4444" }}>- ₹{parseFloat(formData.discount || 0).toFixed(2)}</strong>
+              <span style={styles.summaryLabel}>Deducted Discount:</span>
+              <span style={{ ...styles.summaryVal, color: "#ef4444" }}>- ₹{parseFloat(formData.discount || 0).toFixed(2)}</span>
             </div>
-            <div style={{ ...styles.summaryRow, borderTop: "1px dashed #e2e8f0", paddingTop: "8px", marginTop: "4px" }}>
-              <span style={{ fontSize: "14px", fontWeight: "600" }}>Grand Total:</span>
-              <strong style={{ fontSize: "16px", color: "#6080E8" }}>₹{grandTotal.toFixed(2)}</strong>
+            <div style={{ ...styles.summaryRow, borderTop: "1px dashed #cbd5e1", paddingTop: "8px", marginTop: "4px" }}>
+              <span style={{ fontSize: "14px", fontWeight: "700", color: "#0f172a" }}>Grand Net Total:</span>
+              <span style={{ fontSize: "16px", color: "#6080E8", fontWeight: "700" }}>₹{grandTotal.toFixed(2)}</span>
             </div>
           </div>
 
-          {/* REMARKS */}
+          {/* REMARKS EXTRAS */}
           <div style={styles.formGroup}>
-            <label style={styles.label}>Remarks</label>
-            <textarea
-              style={styles.textarea}
-              rows="2"
-              value={formData.remarks}
-              onChange={(e) => setFormData(prev => ({ ...prev, remarks: e.target.value }))}
-              placeholder="Additional notes..."
-            />
+            <label style={styles.label}>Remarks / Documentation Notes</label>
+            <textarea style={styles.textarea} rows="2" value={formData.remarks} onChange={(e) => setFormData(prev => ({ ...prev, remarks: e.target.value }))} placeholder="Additional notes..." />
           </div>
 
-          {/* FOOTER ACTIONS */}
+          {/* ACTION BUTTON RUNNERS */}
           <div style={styles.footerActions}>
             <button type="button" style={styles.cancelButton} onClick={onClose}>Cancel</button>
             <button type="submit" style={styles.submitButton} disabled={loading}>
@@ -570,39 +558,55 @@ export default function CreateReceipt({ isOpen, schoolId, studentId, onClose, on
 
 const styles = {
   overlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, padding: "12px", boxSizing: "border-box" },
-  modalCard: { background: "#fff", borderRadius: "16px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)", width: "100%", maxWidth: "800px", maxHeight: "90vh", overflowY: "auto", boxSizing: "border-box" },
+  modalCard: { background: "#fff", borderRadius: "16px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)", width: "100%", maxWidth: "740px", maxHeight: "90vh", overflowY: "auto", boxSizing: "border-box" },
   modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "24px 24px 0 24px", borderBottom: "1px solid #f1f5f9", paddingBottom: "16px", marginBottom: "8px" },
   modalTitle: { fontSize: "20px", fontWeight: "700", color: "#1e293b", margin: 0 },
   modalSubtitle: { fontSize: "13px", color: "#64748b", margin: "4px 0 0 0" },
   closeX: { background: "none", border: "none", fontSize: "28px", color: "#94a3b8", cursor: "pointer", lineHeight: "1", padding: "0" },
   form: { padding: "24px", display: "flex", flexDirection: "column", gap: "20px" },
-  section: { marginBottom: "10px" },
+  section: { marginBottom: "4px" },
   sectionTitle: { fontSize: "12px", fontWeight: "700", color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "14px", paddingBottom: "6px", borderBottom: "1px solid #f1f5f9" },
   formGrid: { display: "grid", gap: "14px" },
   formGroup: { display: "flex", flexDirection: "column", gap: "6px" },
-  label: { fontSize: "12px", fontWeight: "600", color: "#475569" },
+  label: { fontSize: "11.5px", fontWeight: "600", color: "#475569" },
   input: { padding: "10px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none", color: "#334155", width: "100%", boxSizing: "border-box" },
   select: { padding: "10px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none", color: "#334155", width: "100%", boxSizing: "border-box", background: "#fff", cursor: "pointer" },
   textarea: { padding: "10px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none", resize: "none", width: "100%", boxSizing: "border-box", color: "#334155", fontFamily: "inherit" },
-  itemAddSection: { display: "flex", flexDirection: "column", gap: "12px", background: "#f8fafc", padding: "14px", borderRadius: "10px", border: "1px solid #e2e8f0" },
+  itemAddSection: { display: "flex", flexDirection: "column", gap: "14px", background: "#f8fafc", padding: "16px", borderRadius: "10px", border: "1px solid #e2e8f0" },
   productSearchWrapper: { position: "relative" },
-  productDropdown: { position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid #cbd5e1", borderRadius: "8px", maxHeight: "200px", overflowY: "auto", zIndex: 2010, boxShadow: "0 10px 15px -3px rgba(0,0,0,0.05)" },
-  productDropdownItem: { padding: "10px 12px", cursor: "pointer", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" },
+  searchBarLabelRow: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", gap: "10px", flexWrap: "wrap" },
+  
+  tabContainer: { display: "flex", gap: "4px", background: "#f1f5f9", padding: "3px", borderRadius: "6px", border: "1px solid #e2e8f0" },
+  tab: { background: "transparent", border: "none", color: "#64748b", padding: "4px 10px", fontSize: "11px", fontWeight: "600", borderRadius: "4px", cursor: "pointer" },
+  activeTab: { background: "#fff", border: "none", color: "#6080E8", padding: "4px 10px", fontSize: "11px", fontWeight: "700", borderRadius: "4px", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", cursor: "default" },
+
+  productDropdown: { position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid #cbd5e1", borderRadius: "8px", maxHeight: "180px", overflowY: "auto", zIndex: 2015, boxShadow: "0 10px 15px -3px rgba(0,0,0,0.08)" },
+  productDropdownItem: { padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "background 0.2s" },
+  productMetaLeft: { display: "flex", flexDirection: "column", gap: "2px" },
   productName: { fontWeight: "600", fontSize: "13.5px", color: "#1e293b" },
+  productSubtitleRow: { display: "flex", gap: "6px", alignItems: "center" },
   productCode: { fontSize: "11px", color: "#64748b", fontFamily: "monospace" },
-  productPrice: { fontSize: "13px", color: "#6080E8", fontWeight: "600" },
+  dropdownBadge: { fontSize: "10px", fontWeight: "700", padding: "2px 6px", borderRadius: "4px", background: "#eff6ff", color: "#3b82f6", textTransform: "uppercase" },
+  productPrice: { fontSize: "13.5px", color: "#6080E8", fontWeight: "700" },
+  dropdownEmptyState: { padding: "20px", fontSize: "13px", color: "#64748b", textAlign: "center", background: "#fff" },
+
   itemRow: { display: "grid", gap: "12px", alignItems: "end" },
   itemField: { display: "flex", flexDirection: "column", gap: "6px" },
-  addButton: { background: "#f0f4ff", color: "#6080E8", border: "1px dashed #6080E8", padding: "10px 14px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px", width: "100%", textAlign: "center", boxSizing: "border-box" },
-  itemsTableWrapper: { width: "100%", overflowX: "auto", background: "#fff", borderRadius: "8px", border: "1px solid #e2e8f0", WebkitOverflowScrolling: "touch", marginTop: "14px" },
-  itemsTable: { width: "100%", borderCollapse: "collapse", minWidth: "500px", textAlign: "left" },
-  tableTh: { background: "#f8fafc", padding: "10px 14px", fontSize: "11px", fontWeight: "700", color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #e2e8f0", whiteSpace: "nowrap" },
-  tableTr: { borderBottom: "1px solid #f1f5f9" },
-  tableTd: { padding: "10px 14px", fontSize: "13.5px", color: "#475569", verticalAlign: "middle" },
-  removeButton: { background: "none", border: "none", color: "#ef4444", fontSize: "20px", cursor: "pointer", padding: "0 4px", lineHeight: "1" },
-  summaryBox: { marginLeft: "auto", width: "100%", maxWidth: "280px", display: "flex", flexDirection: "column", gap: "6px", background: "#f8fafc", padding: "12px", borderRadius: "8px", border: "1px solid #edf2f7", boxSizing: "border-box" },
+  addButton: { background: "#fff", color: "#6080E8", border: "1px solid #6080E8", padding: "10px 14px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px", width: "100%", textAlign: "center", boxSizing: "border-box" },
+  
+  /* GRID LAYOUT DATA SHEET HEADERS AND LINES REINFORCEMENTS */
+  itemsTableWrapper: { width: "100%", overflowX: "auto", background: "#fff", borderRadius: "8px", border: "1px solid #e2e8f0", WebkitOverflowScrolling: "touch", marginTop: "4px" },
+  itemsTable: { width: "100%", borderCollapse: "collapse", minWidth: "560px", textAlign: "left" },
+  tableTh: { background: "#f8fafc", padding: "10px 14px", fontSize: "11px", fontWeight: "700", color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #e2e8f0", borderRight: "1px solid #e2e8f0" },
+  tableTr: { borderBottom: "1px solid #e2e8f0" },
+  tableTd: { padding: "10px 14px", fontSize: "13.5px", color: "#475569", verticalAlign: "middle", borderRight: "1px solid #f1f5f9" },
+  removeButton: { background: "none", border: "none", color: "#ef4444", fontSize: "22px", cursor: "pointer", padding: "0 4px", lineHeight: "1" },
+  
+  summaryBox: { marginLeft: "auto", width: "100%", maxWidth: "260px", display: "flex", flexDirection: "column", gap: "6px", background: "#f8fafc", padding: "12px", borderRadius: "8px", border: "1px solid #e2e8f0", boxSizing: "border-box" },
+  summaryLabel: { fontSize: "12px", color: "#64748b", fontWeight: "500" },
+  summaryVal: { fontSize: "13px", color: "#1e293b", fontWeight: "600" },
   summaryRow: { display: "flex", justifyContent: "space-between", alignItems: "center" },
   footerActions: { display: "flex", gap: "12px", justifyContent: "flex-end", borderTop: "1px solid #f1f5f9", paddingTop: "14px" },
   cancelButton: { background: "#fff", color: "#475569", border: "1px solid #cbd5e1", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px" },
-  submitButton: { background: "#6080E8", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px", boxShadow: "0 2px 4px rgba(96, 128, 232, 0.15)" },
+  submitButton: { background: "#6080E8", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px" },
 };

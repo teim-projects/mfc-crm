@@ -151,9 +151,9 @@ export default function GRN() {
                       <button style={{ ...styles.editBtn, width: isMobile ? "100%" : "auto" }} onClick={() => handleOpenEditModal(grn.id)}>
                         Edit
                       </button>
-                      <button style={{ ...styles.deleteBtn, width: isMobile ? "100%" : "auto" }} onClick={() => handleDelete(grn.id)}>
+                      {/* <button style={{ ...styles.deleteBtn, width: isMobile ? "100%" : "auto" }} onClick={() => handleDelete(grn.id)}>
                         Delete
-                      </button>
+                      </button> */}
                     </div>
                   </td>
                 </tr>
