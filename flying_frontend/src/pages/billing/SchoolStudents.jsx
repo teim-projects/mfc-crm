@@ -30,15 +30,22 @@ export default function SchoolStudents() {
     typeof window !== "undefined" ? window.innerWidth : 1200
   );
 
-  useEffect(() => {
-    fetchSchoolDetails();
-    fetchStudents();
-    fetchAllReceipts();
+ useEffect(() => {
+  const initializeData = async () => {
+    setLoading(true);
+    await fetchSchoolDetails();
+    // 🌟 Step 1: Fetch receipts FIRST so the mapping object exists before filtering students
+    const receiptsMap = await fetchAllReceipts();
+    // 🌟 Step 2: Pass that map directly to the student fetch pipeline
+    await fetchStudents(receiptsMap);
+  };
 
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [schoolId]);
+  initializeData();
+
+  const handleResize = () => setWindowWidth(window.innerWidth);
+  window.addEventListener("resize", handleResize);
+  return () => window.removeEventListener("resize", handleResize);
+}, [schoolId]);
 
   // Reset page position to page 1 whenever filters change
   useEffect(() => {
@@ -54,37 +61,46 @@ export default function SchoolStudents() {
     }
   };
 
-  const fetchStudents = async () => {
-    try {
-      const res = await API.get(`/billing/students-by-school/${schoolId}/`);
-      setStudents(res.data);
-      setFilteredStudents(res.data);
-    } catch (err) {
-      console.error("Error fetching students:", err);
-    }
-  };
+  const fetchStudents = async (receiptsMap) => {
+  try {
+    const res = await API.get(`/billing/students-by-school/${schoolId}/`);
+    
+    // 🌟 FILTER LOGIC: Only retain students who have at least one generated invoice receipt entry mapped
+    const activeReceiptMap = receiptsMap || studentReceipts;
+    const studentsWithReceipts = res.data.filter(student => 
+      activeReceiptMap[student.id] && activeReceiptMap[student.id].length > 0
+    );
+
+    setStudents(studentsWithReceipts);
+    setFilteredStudents(studentsWithReceipts);
+  } catch (err) {
+    console.error("Error fetching students:", err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const fetchAllReceipts = async () => {
-    try {
-      const res = await API.get("/billing/receipts/");
-      const receiptsByStudent = {};
-      
-      res.data.forEach(receipt => {
-        if (receipt.school === parseInt(schoolId)) {
-          if (!receiptsByStudent[receipt.student]) {
-            receiptsByStudent[receipt.student] = [];
-          }
-          receiptsByStudent[receipt.student].push(receipt);
+  try {
+    const res = await API.get("/billing/receipts/");
+    const receiptsByStudent = {};
+    
+    res.data.forEach(receipt => {
+      if (receipt.school === parseInt(schoolId)) {
+        if (!receiptsByStudent[receipt.student]) {
+          receiptsByStudent[receipt.student] = [];
         }
-      });
-      
-      setStudentReceipts(receiptsByStudent);
-    } catch (err) {
-      console.error("Error fetching receipts:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+        receiptsByStudent[receipt.student].push(receipt);
+      }
+    });
+    
+    setStudentReceipts(receiptsByStudent);
+    return receiptsByStudent; // 🌟 Added: Returns map for sequential data synchronizations
+  } catch (err) {
+    console.error("Error fetching receipts:", err);
+    return {};
+  }
+};
 
   const handleViewReceipts = (student) => {
     setSelectedStudent(student);
