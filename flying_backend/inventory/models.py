@@ -180,7 +180,6 @@ from inventory.models import Product
 # =========================================
 # VENDOR MASTER
 # =========================================
-
 class Vendor(models.Model):
 
     vendor_name = models.CharField(
@@ -191,6 +190,12 @@ class Vendor(models.Model):
 
     contact_person = models.CharField(
         max_length=255,
+        blank=True,
+        null=True
+    )
+
+    operating_state = models.CharField(
+        max_length=100,
         blank=True,
         null=True
     )
@@ -210,6 +215,12 @@ class Vendor(models.Model):
         null=True
     )
 
+    category = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True
+    )
+
     is_active = models.BooleanField(
         default=True
     )
@@ -219,9 +230,7 @@ class Vendor(models.Model):
     )
 
     def __str__(self):
-
         return self.vendor_name
-
 
 # =========================================
 # PURCHASE ORDER

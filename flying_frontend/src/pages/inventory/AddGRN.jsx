@@ -3,7 +3,9 @@ import API from "../../api";
 
 export default function AddGRN({ isOpen, id, onClose, onSuccess }) {
   const [poList, setPoList] = useState([]);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 640);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth <= 640 : false
+  );
   const [formData, setFormData] = useState({
     purchase_order: "",
     vendor: "",
@@ -58,7 +60,6 @@ export default function AddGRN({ isOpen, id, onClose, onSuccess }) {
         items: res.data.items.map((item) => ({
           ...item,
           replacement_qty: item.replacement_qty || 0,
-         
         })),
       });
     } catch (err) {
@@ -81,7 +82,6 @@ export default function AddGRN({ isOpen, id, onClose, onSuccess }) {
           product_name: item.product_name,
           ordered_qty: item.quantity,
           replacement_qty: item.replacement_qty || 0,
-          
           received_qty: item.quantity,
           accepted_qty: item.quantity,
           damaged_qty: 0,
@@ -113,7 +113,6 @@ export default function AddGRN({ isOpen, id, onClose, onSuccess }) {
           product: Number(item.product),
           ordered_qty: Number(item.ordered_qty),
           replacement_qty: Number(item.replacement_qty || 0),
-          
           received_qty: Number(item.received_qty),
           accepted_qty: Number(item.accepted_qty),
           damaged_qty: Number(item.damaged_qty),
@@ -202,9 +201,9 @@ export default function AddGRN({ isOpen, id, onClose, onSuccess }) {
                 {formData.items.length > 0 ? (
                   formData.items.map((item, index) => (
                     <tr key={index} style={styles.tableTr}>
-                      <td style={{ ...styles.tableTd, fontWeight: "500", color: "#1e293b" }}>{item.product_name}</td>
-                      <td style={{ ...styles.tableTd, fontWeight: "600", color: "#64748b" }}>{item.ordered_qty}</td>
-                      <td style={{ ...styles.tableTd, color: "#dc2626", fontWeight: "600" }}>
+                      <td style={{ ...styles.tableTd, fontWeight: "500", color: "var(--text-main)" }}>{item.product_name}</td>
+                      <td style={{ ...styles.tableTd, fontWeight: "600", color: "var(--text-muted)" }}>{item.ordered_qty}</td>
+                      <td style={{ ...styles.tableTd, color: "#ef4444", fontWeight: "600" }}>
                         {item.replacement_qty || 0}
                       </td>
                       <td style={styles.tableTd}>
@@ -213,7 +212,7 @@ export default function AddGRN({ isOpen, id, onClose, onSuccess }) {
                       <td style={styles.tableTd}>
                         <input type="number" value={item.damaged_qty} onChange={(e) => handleItemChange(index, "damaged_qty", Number(e.target.value))} style={styles.tableInlineInput} />
                       </td>
-                      <td style={{ ...styles.tableTd, fontWeight: "700", color: "#16a34a", textAlign: "center", fontSize: "14px" }}>
+                      <td style={{ ...styles.tableTd, fontWeight: "700", color: "#10b981", textAlign: "center", fontSize: "14px" }}>
                         {item.accepted_qty}
                       </td>
                     </tr>
@@ -229,7 +228,11 @@ export default function AddGRN({ isOpen, id, onClose, onSuccess }) {
             </table>
           </div>
 
-          <div style={styles.footerActions}>
+          <div style={{
+            ...styles.footerActions,
+            flexDirection: isMobile ? "column-reverse" : "row",
+            alignItems: isMobile ? "stretch" : "center"
+          }}>
             <button type="button" style={styles.cancelBtn} onClick={onClose}>Cancel</button>
             <button type="submit" style={styles.submitBtn}>{id ? "Update Voucher" : "Commit Inward Inventory"}</button>
           </div>
@@ -240,34 +243,67 @@ export default function AddGRN({ isOpen, id, onClose, onSuccess }) {
 }
 
 const styles = {
-  overlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, padding: "12px", boxSizing: "border-box" },
-  modalCard: { background: "#fff", padding: "24px", borderRadius: "16px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)", width: "100%", maxWidth: "800px", maxHeight: "90vh", overflowY: "auto", boxSizing: "border-box" },
-  modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid #f1f5f9", paddingBottom: "14px", marginBottom: "18px" },
-  modalTitle: { fontSize: "20px", fontWeight: "700", color: "#1e293b", margin: 0 },
-  modalSubtitle: { fontSize: "13px", color: "#64748b", margin: 0 },
-  closeX: { background: "none", border: "none", fontSize: "24px", color: "#94a3b8", cursor: "pointer", lineHeight: "1" },
+  overlay: { 
+    position: "fixed", 
+    top: 0, 
+    left: 0, 
+    right: 0, 
+    bottom: 0, 
+    backgroundColor: "rgba(0, 0, 0, 0.65)", 
+    backdropFilter: "blur(5px)", 
+    WebkitBackdropFilter: "blur(5px)", 
+    display: "flex", 
+    alignItems: "center", 
+    justifyContent: "center", 
+    zIndex: 2000, 
+    padding: "12px", 
+    boxSizing: "border-box" 
+  },
+  modalCard: { 
+    background: "var(--bg-card)", 
+    border: "1px solid var(--border-main)",
+    padding: "24px", 
+    borderRadius: "16px", 
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)", 
+    width: "100%", 
+    maxWidth: "800px", 
+    maxHeight: "90vh", 
+    overflowY: "auto", 
+    boxSizing: "border-box" 
+  },
+  modalHeader: { 
+    display: "flex", 
+    justifyContent: "space-between", 
+    alignItems: "flex-start", 
+    borderBottom: "1px solid var(--border-main)", 
+    paddingBottom: "14px", 
+    marginBottom: "18px" 
+  },
+  modalTitle: { fontSize: "20px", fontWeight: "700", color: "var(--text-main)", margin: 0 },
+  modalSubtitle: { fontSize: "13px", color: "var(--text-muted)", margin: 0 },
+  closeX: { background: "none", border: "none", fontSize: "24px", color: "var(--text-muted)", cursor: "pointer", lineHeight: "1" },
   form: { display: "flex", flexDirection: "column", gap: "16px" },
   formGrid: { display: "grid", gap: "14px" },
   inputGroup: { display: "flex", flexDirection: "column", gap: "6px" },
-  label: { fontSize: "12px", fontWeight: "600", color: "#475569" },
-  input: { padding: "10px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none", color: "#334155", width: "100%", boxSizing: "border-box" },
-  select: { padding: "10px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none", color: "#334155", width: "100%", boxSizing: "border-box", background: "#fff", cursor: "pointer" },
-  readOnlyInput: { padding: "10px 12px", borderRadius: "6px", border: "1px solid #e2e8f0", background: "#f8fafc", color: "#64748b", fontSize: "14px", outline: "none", fontFamily: "monospace", width: "100%", boxSizing: "border-box" },
-  vendorBox: { background: "#f8fafc", padding: "14px", borderRadius: "8px", border: "1px solid #e2e8f0" },
-  vendorLabel: { display: "block", fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px" },
-  vendorNameText: { fontSize: "15px", fontWeight: "600", color: "#1e293b" },
-  sectionHeading: { display: "block", fontSize: "12px", fontWeight: "700", color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "4px", marginBottom: "4px" },
+  label: { fontSize: "12px", fontWeight: "600", color: "var(--text-muted)" },
+  input: { padding: "10px 12px", borderRadius: "6px", border: "1px solid var(--border-main)", background: "var(--bg-surface)", fontSize: "14px", outline: "none", color: "var(--text-main)", width: "100%", boxSizing: "border-box" },
+  select: { padding: "10px 12px", borderRadius: "6px", border: "1px solid var(--border-main)", fontSize: "14px", outline: "none", color: "var(--text-main)", width: "100%", boxSizing: "border-box", background: "var(--bg-surface)", cursor: "pointer" },
+  readOnlyInput: { padding: "10px 12px", borderRadius: "6px", border: "1px solid var(--border-main)", background: "var(--bg-layout)", color: "var(--text-muted)", fontSize: "14px", outline: "none", fontFamily: "monospace", width: "100%", boxSizing: "border-box" },
+  vendorBox: { background: "var(--bg-layout)", padding: "14px", borderRadius: "8px", border: "1px solid var(--border-main)" },
+  vendorLabel: { display: "block", fontSize: "11px", fontWeight: "700", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px" },
+  vendorNameText: { fontSize: "15px", fontWeight: "600", color: "var(--text-main)" },
+  sectionHeading: { display: "block", fontSize: "12px", fontWeight: "700", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "4px", marginBottom: "4px" },
   
   /* REFINED TABLE WRAPPERS */
-  tableWrapper: { width: "100%", overflowX: "auto", background: "#fff", borderRadius: "8px", border: "1px solid #e2e8f0", WebkitOverflowScrolling: "touch" },
+  tableWrapper: { width: "100%", overflowX: "auto", background: "var(--bg-card)", borderRadius: "8px", border: "1px solid var(--border-main)", WebkitOverflowScrolling: "touch" },
   itemsTable: { width: "100%", borderCollapse: "collapse", minWidth: "700px", textAlign: "left" },
-  tableTh: { background: "#f8fafc", padding: "10px 14px", fontSize: "11px", fontWeight: "700", color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #e2e8f0", whiteSpace: "nowrap" },
-  tableTr: { borderBottom: "1px solid #f1f5f9" },
-  tableTd: { padding: "10px 14px", fontSize: "13.5px", color: "#475569", verticalAlign: "middle" },
-  tableInlineInput: { width: "100%", padding: "6px 10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box", outline: "none", background: "#fff" },
-  tableEmptyState: { padding: "24px", textAlign: "center", color: "#94a3b8", fontSize: "13px" },
+  tableTh: { background: "var(--bg-table-th)", padding: "10px 14px", fontSize: "11px", fontWeight: "700", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid var(--border-main)", whiteSpace: "nowrap" },
+  tableTr: { borderBottom: "1px solid var(--border-light)" },
+  tableTd: { padding: "10px 14px", fontSize: "13.5px", color: "var(--text-td)", verticalAlign: "middle" },
+  tableInlineInput: { width: "100%", padding: "6px 10px", border: "1px solid var(--border-main)", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box", outline: "none", background: "var(--bg-surface)", color: "var(--text-main)" },
+  tableEmptyState: { padding: "24px", textAlign: "center", color: "var(--text-muted)", fontSize: "13px" },
   
-  footerActions: { display: "flex", gap: "12px", justifyContent: "flex-end", borderTop: "1px solid #f1f5f9", paddingTop: "14px", marginTop: "4px" },
-  cancelBtn: { background: "#fff", color: "#475569", border: "1px solid #cbd5e1", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px" },
-  submitBtn: { background: "#16a34a", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px", boxShadow: "0 2px 4px rgba(22, 163, 74, 0.15)" }
+  footerActions: { display: "flex", gap: "12px", justifyContent: "flex-end", borderTop: "1px solid var(--border-main)", paddingTop: "14px", marginTop: "4px" },
+  cancelBtn: { background: "transparent", color: "var(--text-main)", border: "1px solid var(--border-main)", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px", textAlign: "center" },
+  submitBtn: { background: "#16a34a", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px", boxShadow: "0 2px 4px rgba(16, 163, 74, 0.15)", textAlign: "center" }
 };

@@ -5,6 +5,7 @@ import AddRole from "./AddRole";
 import AddStaff from "./AddStaff"; 
 import Pagination from "../../components/Pagination";
 import AdvancedTableFilter from "../../components/AdvancedTableFilter";
+import RecordViewer from "../../components/RecordViewer";
 
 export default function Staff() {
   const [users, setUsers] = useState([]);
@@ -15,8 +16,10 @@ export default function Staff() {
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false); 
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false); 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
+  const [targetStaffId, setTargetStaffId] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
 
-  // Dynamic window width tracker for handling responsive inline styles
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== "undefined" ? window.innerWidth : 1200
   );
@@ -48,9 +51,19 @@ export default function Staff() {
     }
   };
 
-  // =====================================
-  // PAGINATION
-  // =====================================
+  const deleteStaff = async (id) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this staff member?");
+    if (!confirmDelete) return;
+
+    try {
+      await API.delete(`/auth/users/delete/${id}/`);
+      alert("Staff Deleted Successfully");
+      fetchUsers();
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
@@ -93,7 +106,10 @@ export default function Staff() {
             </button>
             <button 
               style={{ ...styles.primaryButton, width: isMobile ? "100%" : "auto" }} 
-              onClick={() => setIsStaffModalOpen(true)}
+              onClick={() => {
+                setTargetStaffId(null);
+                setIsStaffModalOpen(true);
+              }}
             >
               + Add Staff
             </button>
@@ -109,13 +125,14 @@ export default function Staff() {
                   <th style={styles.th}>Username</th>
                   <th style={styles.th}>Role</th>
                   <th style={styles.th}>Account Status</th>
+                  <th style={{ ...styles.th, textAlign: "center" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedUsers.map((user) => (
                   <tr key={user.id} style={styles.tr}>
                     <td style={styles.td}>
-                      <div style={styles.userNameContainer}>
+                      <div style={{ ...styles.userNameContainer, color: "var(--text-main)" }}>
                          <div style={styles.avatarPlaceholder}>
                            {user.username.charAt(0).toUpperCase()}
                          </div>
@@ -139,6 +156,36 @@ export default function Staff() {
                           {user.is_active ? "Active" : "Inactive"}
                         </button>
                       )}
+                    </td>
+                    <td style={styles.td}>
+                      <div style={styles.actionButtons}>
+                        <button
+                          style={styles.recordBtn}
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setViewOpen(true);
+                          }}
+                        >
+                          +
+                        </button>
+
+                        <button
+                          style={styles.editBtn}
+                          onClick={() => {
+                            setTargetStaffId(user.id);
+                            setIsStaffModalOpen(true);
+                          }}
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          style={styles.deleteBtn}
+                          onClick={() => deleteStaff(user.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -192,17 +239,72 @@ export default function Staff() {
 
       <AddStaff
         isOpen={isStaffModalOpen}
-        onClose={() => setIsStaffModalOpen(false)}
+        id={targetStaffId}
+        onClose={() => {
+          setIsStaffModalOpen(false);
+          setTargetStaffId(null);
+        }}
         onSuccess={() => {
           setIsStaffModalOpen(false);
-          fetchUsers(); 
+          setTargetStaffId(null);
+          fetchUsers();
         }}
+      />
+      <RecordViewer
+        isOpen={viewOpen}
+        onClose={() => setViewOpen(false)}
+        record={selectedUser}
+        title="Staff Details"
       />
     </Sidebar>
   );
 }
 
 const styles = {
+  actionButtons: {
+    display: "flex",
+    gap: "6px",
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    flexWrap: "nowrap"
+  },
+  editBtn: {
+    background: "transparent",
+    color: "#6080E8",
+    border: "1px solid #6080E8",
+    padding: "6px 12px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "12px",
+    fontWeight: "600",
+    whiteSpace: "nowrap",
+    boxSizing: "border-box",
+  },
+  deleteBtn: {
+    background: "#ef4444",
+    color: "#fff",
+    border: "none",
+    padding: "6px 12px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "12px",
+    fontWeight: "600",
+    whiteSpace: "nowrap",
+    boxSizing: "border-box",
+  },
+  recordBtn: {
+    background: "var(--bg-layout)",
+    color: "#6080E8",
+    border: "1px solid #6080E8",
+    padding: "6px 10px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "700",
+    fontSize: "14px",
+    whiteSpace: "nowrap",
+    boxSizing: "border-box",
+  },
   container: {
     width: "100%",
     boxSizing: "border-box",
@@ -234,13 +336,13 @@ const styles = {
   title: {
     fontSize: "22px",
     fontWeight: "700",
-    color: "#1e293b",
+    color: "var(--text-main)",
     margin: 0,
     lineHeight: "1.2",
   },
   subtitle: {
     fontSize: "13px",
-    color: "#64748b",
+    color: "var(--text-muted)",
     margin: 0,
     paddingLeft: "14px",
   },
@@ -264,9 +366,9 @@ const styles = {
     boxSizing: "border-box",
   },
   secondaryButton: {
-    background: "#fff",
-    color: "#475569",
-    border: "1px solid #cbd5e1",
+    background: "var(--bg-card)",
+    color: "var(--text-main)",
+    border: "1px solid var(--border-main)",
     padding: "10px 16px",
     borderRadius: "6px",
     cursor: "pointer",
@@ -278,10 +380,10 @@ const styles = {
   },
   tableWrapper: {
     width: "100%",
-    background: "#fff",
+    background: "var(--bg-card)",
     borderRadius: "12px",
-    border: "1px solid #e2e8f0",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+    border: "1px solid var(--border-main)",
+    boxShadow: "0 1px 3px var(--shadow-light)",
     overflowX: "auto", 
     WebkitOverflowScrolling: "touch",
     marginBottom: "20px"
@@ -292,25 +394,26 @@ const styles = {
     minWidth: "600px",
   },
   th: {
-    background: "#f8fafc",
+    background: "var(--bg-table-th)",
     padding: "14px 20px",
     textAlign: "left",
     fontSize: "11px",
     fontWeight: "600",
-    color: "#64748b",
+    color: "var(--text-muted)",
     textTransform: "uppercase",
     letterSpacing: "0.05em",
-    borderBottom: "1px solid #e2e8f0",
+    borderBottom: "1px solid var(--border-main)",
     whiteSpace: "nowrap",
   },
   tr: {
-    borderBottom: "1px solid #f1f5f9",
+    borderBottom: "1px solid var(--border-light)",
   },
   td: {
     padding: "14px 20px",
     fontSize: "14px",
-    color: "#334155",
+    color: "var(--text-td)",
     whiteSpace: "nowrap",
+    verticalAlign: "middle",
   },
   userNameContainer: {
     display: "flex",
@@ -322,7 +425,7 @@ const styles = {
     width: "28px",
     height: "28px",
     borderRadius: "50%",
-    background: "#f0f4ff",
+    background: "rgba(96, 128, 232, 0.15)",
     color: "#6080E8",
     display: "flex",
     alignItems: "center",
@@ -332,8 +435,8 @@ const styles = {
     flexShrink: 0,
   },
   roleBadge: {
-    background: "#f0f4ff",
-    color: "#6080E8",
+    background: "rgba(96, 128, 232, 0.12)",
+    color: "#7C94F2",
     padding: "4px 12px",
     borderRadius: "6px",
     fontSize: "12px",
@@ -351,7 +454,7 @@ const styles = {
     whiteSpace: "nowrap",
   },
   superAdminBadge: {
-    background: "#1e293b",
+    background: "#6080E8",
     color: "#fff",
     padding: "6px 14px",
     borderRadius: "6px",
@@ -364,7 +467,7 @@ const styles = {
   emptyState: {
     padding: "60px 20px",
     textAlign: "center",
-    color: "#64748b",
+    color: "var(--text-muted)",
   },
   drawerOverlay: {
     position: "fixed",
@@ -372,7 +475,7 @@ const styles = {
     left: 0,
     width: "100vw",
     height: "100vh",
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     zIndex: 999,
   },
   drawer: {
@@ -380,8 +483,8 @@ const styles = {
     top: 0,
     right: 0,
     height: "100vh",
-    backgroundColor: "#fff",
-    boxShadow: "-4px 0 15px rgba(0,0,0,0.1)",
+    backgroundColor: "var(--bg-card)",
+    boxShadow: "-4px 0 15px rgba(0,0,0,0.2)",
     zIndex: 1000,
     transition: "transform 0.3s ease-in-out",
     display: "flex",
@@ -393,19 +496,19 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
     padding: "20px",
-    borderBottom: "1px solid #e2e8f0",
+    borderBottom: "1px solid var(--border-main)",
   },
   drawerTitle: {
     margin: 0,
     fontSize: "18px",
     fontWeight: "700",
-    color: "#1e293b",
+    color: "var(--text-main)",
   },
   closeButton: {
     background: "none",
     border: "none",
     fontSize: "24px",
-    color: "#64748b",
+    color: "var(--text-muted)",
     cursor: "pointer",
     lineHeight: "1",
   },

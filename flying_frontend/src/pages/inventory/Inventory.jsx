@@ -35,17 +35,11 @@ export default function Inventory() {
           </button>
 
           <button
-           style={
-             activeTab === "stock"
-               ? styles.activeTab
-               : styles.tab
-           }
-           onClick={() =>
-             setActiveTab("stock")
-           }
-           >
-             Stock Summary
-           </button>
+            style={activeTab === "stock" ? styles.activeTab : styles.tab}
+            onClick={() => setActiveTab("stock")}
+          >
+            Stock Summary
+          </button>
         </div>
 
         {/* COMPONENT CONTENT VIEWS */}
@@ -67,7 +61,7 @@ const styles = {
   },
   tabContainer: {
     display: "inline-flex",
-    background: "#e2e8f0",
+    background: "var(--border-main)", // 👈 Dynamic Variable (Flips dark container background lines automatically)
     padding: "4px",
     borderRadius: "8px",
     marginBottom: "24px",
@@ -81,7 +75,7 @@ const styles = {
     border: "none",
     borderRadius: "6px",
     background: "transparent",
-    color: "#475569",
+    color: "var(--text-muted)", // 👈 Dynamic Variable
     cursor: "pointer",
     fontWeight: "600",
     fontSize: "13px",
@@ -92,13 +86,13 @@ const styles = {
     padding: "8px 16px",
     border: "none",
     borderRadius: "6px",
-    background: "#fff",
-    color: "#6080E8",
+    background: "var(--bg-surface)", // 👈 Dynamic Variable (Creates matching card panels surfaces backdrop in light/dark mode)
+    color: "#6080E8", // Accent text color retained
     cursor: "pointer",
     fontWeight: "700",
     fontSize: "13px",
     whiteSpace: "nowrap",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+    boxShadow: "0 1px 3px var(--shadow-light)", // 👈 Dynamic Variable
     transition: "all 0.2s ease",
   },
   contentArea: {

@@ -4,6 +4,7 @@ import Sidebar from "../../components/Sidebar";
 import AddStudent from "./AddStudent"; 
 import Pagination from "../../components/Pagination";
 import AdvancedTableFilter from "../../components/AdvancedTableFilter";
+import RecordViewer from "../../components/RecordViewer";
 
 export default function AllStudents() {
   const [students, setStudents] = useState([]);
@@ -14,9 +15,10 @@ export default function AllStudents() {
   const [modalOpen, setModalOpen] = useState(false);
   const [targetStudentId, setTargetStudentId] = useState(null);
   const [selectedSchoolId, setSelectedSchoolId] = useState(null);
-  const [isFilterOpen, setIsFilterOpen] = useState(false); // Manages filter panel slide state
+  const [isFilterOpen, setIsFilterOpen] = useState(false); 
+  const [viewOpen, setViewOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState(null);
 
-  // Layout screen width listener
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== "undefined" ? window.innerWidth : 1200
   );
@@ -53,9 +55,7 @@ export default function AllStudents() {
   };
 
   const deleteStudent = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this student?"
-    );
+    const confirmDelete = window.confirm("Are you sure you want to delete this student?");
     if (!confirmDelete) return;
 
     try {
@@ -67,9 +67,6 @@ export default function AllStudents() {
     }
   };
 
-  // =====================================
-  // PAGINATION
-  // =====================================
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedStudents = filteredStudents.slice(startIndex, startIndex + itemsPerPage);
@@ -100,7 +97,6 @@ export default function AllStudents() {
             flexDirection: isMobile ? "column" : "row",
             width: isMobile ? "100%" : "auto"
           }}>
-            {/* LINKED ACTION TRIGGER */}
             <button 
               style={{ ...styles.secondaryButton, width: isMobile ? "100%" : "auto" }} 
               onClick={() => setIsFilterOpen(true)}
@@ -129,15 +125,17 @@ export default function AllStudents() {
               <tbody>
                 {paginatedStudents.map((student) => (
                   <tr key={student.id} style={styles.tr}>
-                    <td style={{ ...styles.td, fontWeight: "600", color: "#1e293b" }}>
+                    <td style={styles.td}>
                       <div style={styles.nameSection}>
                         <div style={styles.avatar}>
                           {student.student_name ? student.student_name.charAt(0).toUpperCase() : "S"}
                         </div>
-                        {student.student_name}
+                        <span style={{ fontWeight: "600", color: "var(--text-main)" }}>
+                          {student.student_name}
+                        </span>
                       </div>
                     </td>
-                    <td style={{ ...styles.td, fontWeight: "500", color: "#475569" }}>
+                    <td style={{ ...styles.td, fontWeight: "500", color: "var(--text-td)" }}>
                       {student.school_name}
                     </td>
                     <td style={styles.td}>
@@ -146,33 +144,38 @@ export default function AllStudents() {
                       </span>
                     </td>
                     <td style={styles.td}>
-                      <span style={styles.levelMarker}>Lvl {student.level}</span>
+                      <span style={styles.levelMarker}> {student.level}</span>
                     </td>
                     <td style={styles.td}>{student.parent_name || "—"}</td>
                     <td style={styles.td}>{student.parent_contact || "—"}</td>
                     <td style={styles.td}>
                       <span style={{
                         ...styles.rteBadge,
-                        background: student.rte ? "#dcfce7" : "#fee2e2",
-                        color: student.rte ? "#166534" : "#991b1b",
+                        background: student.rte ? "rgba(22, 101, 52, 0.15)" : "rgba(153, 27, 27, 0.15)",
+                        color: student.rte ? "#22c55e" : "#ef4444",
                       }}>
                         {student.rte ? "YES" : "NO"}
                       </span>
                     </td>
                     <td style={styles.td}>
-                      <div style={{
-                        ...styles.actionButtonGroup,
-                        flexDirection: isMobile ? "column" : "row",
-                        gap: isMobile ? "8px" : "6px"
-                      }}>
+                      <div style={styles.actionButtonGroup}>
                         <button
-                          style={{ ...styles.editBtn, width: isMobile ? "100%" : "auto" }}
+                          style={styles.viewBtn}
+                          onClick={() => {
+                            setSelectedStudent(student);
+                            setViewOpen(true);
+                          }}
+                        >
+                          +
+                        </button>
+                        <button
+                          style={styles.editBtn}
                           onClick={() => handleOpenEditModal(student.id, student.school)}
                         >
                           Edit
                         </button>
                         <button
-                          style={{ ...styles.deleteBtn, width: isMobile ? "100%" : "auto" }}
+                          style={styles.deleteBtn}
                           onClick={() => deleteStudent(student.id)}
                         >
                           Delete
@@ -227,11 +230,29 @@ export default function AllStudents() {
         onClose={() => setModalOpen(false)}
         onSuccess={handleModalSuccess}
       />
+      <RecordViewer
+        isOpen={viewOpen}
+        onClose={() => setViewOpen(false)}
+        record={selectedStudent}
+        title="Student Details"
+      />
     </Sidebar>
   );
 }
 
 const styles = {
+  viewBtn: {
+    background: "var(--bg-layout)",
+    color: "#6080E8",
+    border: "1px solid #6080E8",
+    padding: "6px 10px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "700",
+    fontSize: "14px",
+    boxSizing: "border-box",
+    whiteSpace: "nowrap",
+  },
   container: {
     width: "100%",
     boxSizing: "border-box",
@@ -263,13 +284,13 @@ const styles = {
   title: {
     fontSize: "22px",
     fontWeight: "700",
-    color: "#1e293b",
+    color: "var(--text-main)",
     margin: 0,
     lineHeight: "1.2",
   },
   subtitle: {
     fontSize: "13px",
-    color: "#64748b",
+    color: "var(--text-muted)",
     margin: 0,
     paddingLeft: "14px",
   },
@@ -279,9 +300,9 @@ const styles = {
     alignItems: "center",
   },
   secondaryButton: {
-    background: "#fff",
-    color: "#475569",
-    border: "1px solid #cbd5e1",
+    background: "var(--bg-card)",
+    color: "var(--text-main)",
+    border: "1px solid var(--border-main)",
     padding: "10px 16px",
     borderRadius: "6px",
     cursor: "pointer",
@@ -293,10 +314,10 @@ const styles = {
   },
   tableWrapper: {
     width: "100%",
-    background: "#fff",
+    background: "var(--bg-card)",
     borderRadius: "12px",
-    border: "1px solid #e2e8f0",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+    border: "1px solid var(--border-main)",
+    boxShadow: "0 1px 3px var(--shadow-light)",
     overflowX: "auto",
     WebkitOverflowScrolling: "touch",
     marginBottom: "20px"
@@ -307,25 +328,25 @@ const styles = {
     minWidth: "1000px",
   },
   th: {
-    background: "#f8fafc",
+    background: "var(--bg-table-th)",
     padding: "14px 20px",
     textAlign: "left",
     fontSize: "11px",
     fontWeight: "600",
-    color: "#64748b",
+    color: "var(--text-muted)",
     textTransform: "uppercase",
     letterSpacing: "0.05em",
-    borderBottom: "1px solid #e2e8f0",
+    borderBottom: "1px solid var(--border-main)",
     whiteSpace: "nowrap",
   },
   tr: {
-    borderBottom: "1px solid #f1f5f9",
+    borderBottom: "1px solid var(--border-light)",
     transition: "background-color 0.2s ease",
   },
   td: {
     padding: "12px 20px",
     fontSize: "14px",
-    color: "#334155",
+    color: "var(--text-td)",
     whiteSpace: "nowrap",
     verticalAlign: "middle",
   },
@@ -338,7 +359,7 @@ const styles = {
     width: "28px",
     height: "28px",
     borderRadius: "50%",
-    background: "#f0f4ff",
+    background: "rgba(96, 128, 232, 0.15)",
     color: "#6080E8",
     display: "flex",
     alignItems: "center",
@@ -348,8 +369,8 @@ const styles = {
     flexShrink: 0,
   },
   courseBadge: {
-    background: "#f0f4ff",
-    color: "#6080E8",
+    background: "rgba(96, 128, 232, 0.12)",
+    color: "#7C94F2",
     padding: "3px 8px",
     borderRadius: "4px",
     fontSize: "12px",
@@ -357,7 +378,7 @@ const styles = {
     display: "inline-block"
   },
   levelMarker: {
-    color: "#475569",
+    color: "var(--text-main)",
     fontWeight: "600",
     fontSize: "13px",
   },
@@ -373,9 +394,12 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    gap: "6px"
   },
   editBtn: {
-    background: "#fff",
+    background: "transparent",
     color: "#6080E8",
     border: "1px solid #6080E8",
     padding: "6px 12px",
@@ -384,6 +408,7 @@ const styles = {
     fontWeight: "600",
     fontSize: "12px",
     boxSizing: "border-box",
+    whiteSpace: "nowrap",
   },
   deleteBtn: {
     background: "#ef4444",
@@ -395,11 +420,12 @@ const styles = {
     fontWeight: "600",
     fontSize: "12px",
     boxSizing: "border-box",
+    whiteSpace: "nowrap",
   },
   emptyState: {
     padding: "60px 20px",
     textAlign: "center",
-    color: "#64748b",
+    color: "var(--text-muted)",
   },
   drawerOverlay: {
     position: "fixed",
@@ -407,7 +433,7 @@ const styles = {
     left: 0,
     width: "100vw",
     height: "100vh",
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     zIndex: 999,
   },
   drawer: {
@@ -415,8 +441,8 @@ const styles = {
     top: 0,
     right: 0,
     height: "100vh",
-    backgroundColor: "#fff",
-    boxShadow: "-4px 0 15px rgba(0,0,0,0.1)",
+    backgroundColor: "var(--bg-card)",
+    boxShadow: "-4px 0 15px rgba(0,0,0,0.2)",
     zIndex: 1000,
     transition: "transform 0.3s ease-in-out",
     display: "flex",
@@ -428,19 +454,19 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
     padding: "20px",
-    borderBottom: "1px solid #e2e8f0",
+    borderBottom: "1px solid var(--border-main)",
   },
   drawerTitle: {
     margin: 0,
     fontSize: "18px",
     fontWeight: "700",
-    color: "#1e293b",
+    color: "var(--text-main)",
   },
   closeButton: {
     background: "none",
     border: "none",
     fontSize: "24px",
-    color: "#64748b",
+    color: "var(--text-muted)",
     cursor: "pointer",
     lineHeight: "1",
   },

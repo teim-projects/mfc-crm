@@ -30,11 +30,11 @@ export default function Dashboard() {
           <div style={styles.chartCard}>
             <h3 style={styles.chartTitle}>Monthly Revenue Trend</h3>
             <div style={styles.barChartContainer}>
-              <div style={{ ...styles.bar, height: "40%", background: "#E2E8F0" }}></div>
-              <div style={{ ...styles.bar, height: "60%", background: "#E2E8F0" }}></div>
+              <div style={{ ...styles.bar, height: "40%", background: "var(--border-main)" }}></div>
+              <div style={{ ...styles.bar, height: "60%", background: "var(--border-main)" }}></div>
               <div style={{ ...styles.bar, height: "85%", background: "#6080E8" }}></div>
-              <div style={{ ...styles.bar, height: "50%", background: "#E2E8F0" }}></div>
-              <div style={{ ...styles.bar, height: "70%", background: "#E2E8F0" }}></div>
+              <div style={{ ...styles.bar, height: "50%", background: "var(--border-main)" }}></div>
+              <div style={{ ...styles.bar, height: "70%", background: "var(--border-main)" }}></div>
               <div style={{ ...styles.bar, height: "95%", background: "#6080E8" }}></div>
             </div>
             <div style={styles.chartLabels}>
@@ -49,21 +49,21 @@ export default function Dashboard() {
               <div style={styles.activityItem}>
                 <span style={styles.activityDot}></span>
                 <div>
-                  <p style={styles.activityText}><strong>New Admission</strong> - Aryan Sharma</p>
+                  <p style={styles.activityText}><strong style={{ color: "var(--text-main)" }}>New Admission</strong> - Aryan Sharma</p>
                   <small style={styles.activityTime}>2 mins ago</small>
                 </div>
               </div>
               <div style={styles.activityItem}>
                 <span style={{...styles.activityDot, background: "#f59e0b"}}></span>
                 <div>
-                  <p style={styles.activityText}><strong>Payment Received</strong> - Little Flower School</p>
+                  <p style={styles.activityText}><strong style={{ color: "var(--text-main)" }}>Payment Received</strong> - Little Flower School</p>
                   <small style={styles.activityTime}>1 hour ago</small>
                 </div>
               </div>
               <div style={styles.activityItem}>
                 <span style={{...styles.activityDot, background: "#6080E8"}}></span>
                 <div>
-                  <p style={styles.activityText}><strong>Staff Added</strong> - Ritesh Kumar</p>
+                  <p style={styles.activityText}><strong style={{ color: "var(--text-main)" }}>Staff Added</strong> - Ritesh Kumar</p>
                   <small style={styles.activityTime}>3 hours ago</small>
                 </div>
               </div>
@@ -112,13 +112,13 @@ const styles = {
   title: {
     fontSize: "22px",
     fontWeight: "700",
-    color: "#1e293b",
+    color: "var(--text-main)", // 👈 Variable
     margin: 0,
     lineHeight: "1.2",
   },
   subtitle: {
     fontSize: "13px",
-    color: "#64748b",
+    color: "var(--text-muted)", // 👈 Variable
     margin: 0,
     paddingLeft: "14px",
   },
@@ -129,11 +129,11 @@ const styles = {
     marginBottom: "24px",
   },
   card: {
-    background: "#fff",
+    background: "var(--bg-card)", // 👈 Variable
     padding: "20px 24px",
     borderRadius: "12px",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
-    border: "1px solid #e2e8f0",
+    boxShadow: "0 1px 3px var(--shadow-light)", // 👈 Variable
+    border: "1px solid var(--border-main)", // 👈 Variable
     position: "relative",
     overflow: "hidden",
   },
@@ -146,7 +146,7 @@ const styles = {
   },
   cardLabel: {
     fontSize: "11px",
-    color: "#64748b",
+    color: "var(--text-muted)", // 👈 Variable
     fontWeight: "600",
     margin: "0 0 6px 0",
     textTransform: "uppercase",
@@ -155,27 +155,26 @@ const styles = {
   cardValue: {
     fontSize: "26px",
     fontWeight: "700",
-    color: "#0f172a",
+    color: "var(--text-main)", // 👈 Variable
     margin: 0,
   },
   chartsRow: {
     display: "grid",
-    /* 🌟 Dynamic clamping ensures it scales seamlessly without hard logic scripts */
     gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))",
     gap: "20px",
   },
   chartCard: {
-    background: "#fff",
+    background: "var(--bg-card)", // 👈 Variable
     padding: "24px",
     borderRadius: "12px",
-    border: "1px solid #e2e8f0",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+    border: "1px solid var(--border-main)", // 👈 Variable
+    boxShadow: "0 1px 3px var(--shadow-light)", // 👈 Variable
     boxSizing: "border-box",
   },
   chartTitle: {
     fontSize: "15px",
     fontWeight: "600",
-    color: "#1e293b",
+    color: "var(--text-main)", // 👈 Variable
     marginBottom: "20px",
   },
   barChartContainer: {
@@ -195,7 +194,7 @@ const styles = {
     justifyContent: "space-between",
     marginTop: "12px",
     fontSize: "12px",
-    color: "#94a3b8",
+    color: "var(--text-muted)", // 👈 Variable
     padding: "0 2px",
   },
   activityList: {
@@ -218,12 +217,12 @@ const styles = {
   },
   activityText: {
     fontSize: "13.5px",
-    color: "#334155",
+    color: "var(--text-td)", // 👈 Variable
     margin: 0,
     lineHeight: "1.4",
   },
   activityTime: {
     fontSize: "11px",
-    color: "#94a3b8",
+    color: "var(--text-muted)", // 👈 Variable
   },
 };

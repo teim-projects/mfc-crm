@@ -4,6 +4,7 @@ import Sidebar from "../../components/Sidebar";
 import AddProduct from "./AddProduct";
 import Pagination from "../../components/Pagination";
 import AdvancedTableFilter from "../../components/AdvancedTableFilter";
+import RecordViewer from "../../components/RecordViewer";
 
 export default function Products() {
   const [products, setProducts] = useState([]);
@@ -13,9 +14,10 @@ export default function Products() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [targetProductId, setTargetProductId] = useState(null);
-  const [isFilterOpen, setIsFilterOpen] = useState(false); // Controls sliding sidebar filter
+  const [isFilterOpen, setIsFilterOpen] = useState(false); 
+  const [viewOpen, setViewOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
-  // Real-time responsive layout breakpoint observer
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== "undefined" ? window.innerWidth : 1200
   );
@@ -55,9 +57,7 @@ export default function Products() {
   };
 
   const deleteProduct = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this product?"
-    );
+    const confirmDelete = window.confirm("Are you sure you want to delete this product?");
     if (!confirmDelete) return;
 
     try {
@@ -69,9 +69,6 @@ export default function Products() {
     }
   };
 
-  // =====================================
-  // PAGINATION
-  // =====================================
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
@@ -102,7 +99,6 @@ export default function Products() {
             flexDirection: isMobile ? "column" : "row",
             width: isMobile ? "100%" : "auto"
           }}>
-            {/* FILTER BUTTON */}
             <button 
               style={{ ...styles.secondaryButton, width: isMobile ? "100%" : "auto" }} 
               onClick={() => setIsFilterOpen(true)}
@@ -137,10 +133,10 @@ export default function Products() {
               <tbody>
                 {paginatedProducts.map((product) => (
                   <tr key={product.id} style={styles.tr}>
-                    <td style={{ ...styles.td, fontWeight: "600", color: "#1e293b" }}>
+                    <td style={{ ...styles.td, fontWeight: "600", color: "var(--text-main)" }}>
                       {product.product_name}
                     </td>
-                    <td style={{ ...styles.td, color: "#475569", fontFamily: "monospace", fontSize: "13px" }}>
+                    <td style={{ ...styles.td, color: "var(--text-muted)", fontFamily: "monospace", fontSize: "13px" }}>
                       {product.product_code || "—"}
                     </td>
                     <td style={styles.td}>
@@ -148,10 +144,10 @@ export default function Products() {
                         {product.product_type ? product.product_type.toUpperCase() : "—"}
                       </span>
                     </td>
-                    <td style={{ ...styles.td, color: "#475569" }}>
+                    <td style={{ ...styles.td, color: "var(--text-td)" }}>
                       {product.course_type_name === "vedic_maths" ? "Vedic Maths" : product.course_type_name === "abacus" ? "Abacus" : product.course_type_name || "—"}
                     </td>
-                    <td style={{ ...styles.td, fontWeight: "500", color: "#64748b" }}>
+                    <td style={{ ...styles.td, fontWeight: "500", color: "var(--text-muted)" }}>
                       {product.course_level || "Common"}
                     </td>
                     <td style={styles.td}>
@@ -163,27 +159,32 @@ export default function Products() {
                       <span
                         style={{
                           ...styles.statusBadge,
-                          background: product.is_active ? "#dcfce7" : "#fee2e2",
-                          color: product.is_active ? "#166534" : "#991b1b",
+                          background: product.is_active ? "rgba(22, 101, 52, 0.15)" : "rgba(153, 27, 27, 0.15)",
+                          color: product.is_active ? "#22c55e" : "#ef4444",
                         }}
                       >
                         {product.is_active ? "Active" : "Inactive"}
                       </span>
                     </td>
                     <td style={styles.td}>
-                      <div style={{
-                        ...styles.actionButtonGroup,
-                        flexDirection: isMobile ? "column" : "row",
-                        gap: isMobile ? "8px" : "6px"
-                      }}>
+                      <div style={styles.actionButtonGroup}>
                         <button
-                          style={{ ...styles.editBtn, width: isMobile ? "100%" : "auto" }}
+                          style={styles.recordBtn}
+                          onClick={() => {
+                            setSelectedProduct(product);
+                            setViewOpen(true);
+                          }}
+                        >
+                          +
+                        </button>
+                        <button
+                          style={styles.editBtn}
                           onClick={() => handleOpenEditModal(product.id)}
                         >
                           Edit
                         </button>
                         <button
-                          style={{ ...styles.deleteBtn, width: isMobile ? "100%" : "auto" }}
+                          style={styles.deleteBtn}
                           onClick={() => deleteProduct(product.id)}
                         >
                           Delete
@@ -237,11 +238,29 @@ export default function Products() {
         onClose={() => setModalOpen(false)}
         onSuccess={handleModalSuccess}
       />
+      <RecordViewer
+        isOpen={viewOpen}
+        onClose={() => setViewOpen(false)}
+        record={selectedProduct}
+        title="Product Details"
+      />
     </Sidebar>
   );
 }
 
 const styles = {
+  recordBtn: {
+    background: "var(--bg-layout)",
+    color: "#6080E8",
+    border: "1px solid #6080E8",
+    padding: "6px 10px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "700",
+    fontSize: "14px",
+    boxSizing: "border-box",
+    whiteSpace: "nowrap",
+  },
   container: {
     width: "100%",
     boxSizing: "border-box",
@@ -273,13 +292,13 @@ const styles = {
   title: {
     fontSize: "22px",
     fontWeight: "700",
-    color: "#1e293b",
+    color: "var(--text-main)",
     margin: 0,
     lineHeight: "1.2",
   },
   subtitle: {
     fontSize: "13px",
-    color: "#64748b",
+    color: "var(--text-muted)",
     margin: 0,
     paddingLeft: "14px",
   },
@@ -303,9 +322,9 @@ const styles = {
     boxSizing: "border-box",
   },
   secondaryButton: {
-    background: "#fff",
-    color: "#475569",
-    border: "1px solid #cbd5e1",
+    background: "var(--bg-card)",
+    color: "var(--text-main)",
+    border: "1px solid var(--border-main)",
     padding: "10px 16px",
     borderRadius: "6px",
     cursor: "pointer",
@@ -317,10 +336,10 @@ const styles = {
   },
   tableWrapper: {
     width: "100%",
-    background: "#fff",
+    background: "var(--bg-card)",
     borderRadius: "12px",
-    border: "1px solid #e2e8f0",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+    border: "1px solid var(--border-main)",
+    boxShadow: "0 1px 3px var(--shadow-light)",
     overflowX: "auto",
     WebkitOverflowScrolling: "touch",
     marginBottom: "20px"
@@ -331,31 +350,31 @@ const styles = {
     minWidth: "900px",
   },
   th: {
-    background: "#f8fafc",
+    background: "var(--bg-table-th)",
     padding: "14px 20px",
     textAlign: "left",
     fontSize: "11px",
     fontWeight: "600",
-    color: "#64748b",
+    color: "var(--text-muted)",
     textTransform: "uppercase",
     letterSpacing: "0.05em",
-    borderBottom: "1px solid #e2e8f0",
+    borderBottom: "1px solid var(--border-main)",
     whiteSpace: "nowrap",
   },
   tr: {
-    borderBottom: "1px solid #f1f5f9",
+    borderBottom: "1px solid var(--border-light)",
     transition: "background-color 0.2s ease",
   },
   td: {
     padding: "12px 20px",
     fontSize: "14px",
-    color: "#334155",
+    color: "var(--text-td)",
     whiteSpace: "nowrap",
     verticalAlign: "middle",
   },
   typeBadge: {
-    background: "#f1f5f9",
-    color: "#475569",
+    background: "rgba(96, 128, 232, 0.12)",
+    color: "#7C94F2",
     padding: "3px 8px",
     borderRadius: "4px",
     fontSize: "11px",
@@ -365,7 +384,7 @@ const styles = {
   },
   rateLabel: {
     fontWeight: "600",
-    color: "#0f172a",
+    color: "var(--text-main)",
   },
   statusBadge: {
     display: "inline-block",
@@ -379,9 +398,12 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    gap: "6px"
   },
   editBtn: {
-    background: "#fff",
+    background: "transparent",
     color: "#6080E8",
     border: "1px solid #6080E8",
     padding: "6px 12px",
@@ -390,6 +412,7 @@ const styles = {
     fontWeight: "600",
     fontSize: "12px",
     boxSizing: "border-box",
+    whiteSpace: "nowrap",
   },
   deleteBtn: {
     background: "#ef4444",
@@ -401,11 +424,12 @@ const styles = {
     fontWeight: "600",
     fontSize: "12px",
     boxSizing: "border-box",
+    whiteSpace: "nowrap",
   },
   emptyState: {
     padding: "60px 20px",
     textAlign: "center",
-    color: "#64748b",
+    color: "var(--text-muted)",
   },
   drawerOverlay: {
     position: "fixed",
@@ -413,7 +437,7 @@ const styles = {
     left: 0,
     width: "100vw",
     height: "100vh",
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     zIndex: 999,
   },
   drawer: {
@@ -421,8 +445,8 @@ const styles = {
     top: 0,
     right: 0,
     height: "100vh",
-    backgroundColor: "#fff",
-    boxShadow: "-4px 0 15px rgba(0,0,0,0.1)",
+    backgroundColor: "var(--bg-card)",
+    boxShadow: "-4px 0 15px rgba(0,0,0,0.2)",
     zIndex: 1000,
     transition: "transform 0.3s ease-in-out",
     display: "flex",
@@ -434,19 +458,19 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
     padding: "20px",
-    borderBottom: "1px solid #e2e8f0",
+    borderBottom: "1px solid var(--border-main)",
   },
   drawerTitle: {
     margin: 0,
     fontSize: "18px",
     fontWeight: "700",
-    color: "#1e293b",
+    color: "var(--text-main)",
   },
   closeButton: {
     background: "none",
     border: "none",
     fontSize: "24px",
-    color: "#64748b",
+    color: "var(--text-muted)",
     cursor: "pointer",
     lineHeight: "1",
   },

@@ -1,18 +1,21 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useTheme } from "/src/context/ThemeContext";
 
 export default function Sidebar({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme(); 
 
-  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
+  const [windowWidth, setWindowWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1200
+  );
+  const [sidebarOpen, setSidebarOpen] = useState(windowWidth > 768);
   const [billingOpen, setBillingOpen] = useState(location.pathname.startsWith("/billing"));
 
-  // =====================================
-  // RESPONSIVE
-  // =====================================
   useEffect(() => {
     const handleResize = () => {
+      setWindowWidth(window.innerWidth);
       if (window.innerWidth <= 768) {
         setSidebarOpen(false);
       } else {
@@ -24,17 +27,11 @@ export default function Sidebar({ children }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // =====================================
-  // LOGOUT
-  // =====================================
   const handleLogout = () => {
     localStorage.removeItem("access");
     navigate("/");
   };
 
-  // =====================================
-  // ACTIVE ROUTE
-  // =====================================
   const isActive = (path) => {
     return location.pathname.startsWith(path);
   };
@@ -47,6 +44,8 @@ export default function Sidebar({ children }) {
       return active ? styles.activeLinkClosed : styles.linkClosed;
     }
   };
+
+  const isMobile = windowWidth <= 768;
 
   return (
     <div style={styles.layout}>
@@ -73,8 +72,11 @@ export default function Sidebar({ children }) {
           )}
         </div>
 
-        {/* CENTER */}
-        <div style={styles.artSection}>
+        {/* CENTER BRANDING SECTION - AUTO HIDES ON MOBILE VIEWS */}
+        <div style={{
+          ...styles.artSection,
+          display: isMobile ? "none" : "flex"
+        }}>
           <div style={styles.abacusIcon}>
             <div style={styles.abacusWire}></div>
             <div style={styles.bead}></div>
@@ -88,15 +90,20 @@ export default function Sidebar({ children }) {
             <div style={styles.innerCircle}></div>
           </div>
         </div>
+
+        {/* RIGHT - THEME TOGGLE SWITCH */}
+        <div style={{ paddingRight: "20px" }}>
+          <button onClick={toggleTheme} style={styles.themeToggleBtn}>
+            {theme === "dark" ? "☀️ Light" : "🌙 Dark"}
+          </button>
+        </div>
       </div>
 
       {/* =====================================
           BODY
       ===================================== */}
       <div style={styles.body}>
-        {/* =====================================
-            SIDEBAR
-        ===================================== */}
+        {/* SIDEBAR */}
         <div
           style={{
             ...styles.sidebar,
@@ -133,7 +140,7 @@ export default function Sidebar({ children }) {
               {/* PROMOTIONS */}
               <Link to="/promotions" style={getLinkStyle("/promotions")}>
                 <span style={styles.iconStyle}>📢</span>
-                {sidebarOpen && "Promotions"}
+                {sidebarOpen && "Promote"}
               </Link>
 
               {/* COURSES */}
@@ -219,34 +226,42 @@ const styles = {
     textDecoration: "none",
     padding: "10px 18px 10px 52px",
     borderRadius: "8px",
-    fontSize: "14px", // 🌟 Increased slightly from 13.5px
+    fontSize: "14px",
     display: "block",
     marginTop: "4px",
     transition: "background 0.2s ease",
   },
-  
-  /* ARTWORK HEADERS */
+  themeToggleBtn: {
+    background: "var(--bg-layout)",
+    color: "var(--text-main)",
+    border: "1px solid var(--border-main)",
+    padding: "6px 12px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontWeight: "600",
+    fontSize: "13px",
+    transition: "all 0.2s ease"
+  },
   artSection: {
     flex: 1,
-    display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    gap: window.innerWidth <= 768 ? "8px" : "15px",
+    gap: "15px",
     opacity: 0.7,
     padding: "0 10px",
     overflow: "hidden",
   },
   artText: {
-    fontSize: window.innerWidth <= 768 ? "0.75rem" : "0.85rem",
+    fontSize: "0.85rem",
     fontWeight: "700",
     color: "#6080E8",
     textTransform: "uppercase",
-    letterSpacing: window.innerWidth <= 768 ? "1px" : "2px",
+    letterSpacing: "2px",
     whiteSpace: "nowrap",
   },
   abacusIcon: {
-    width: window.innerWidth <= 768 ? "10px" : "14px",
-    height: window.innerWidth <= 768 ? "16px" : "22px",
+    width: "14px",
+    height: "22px",
     border: "2px solid #6080E8",
     borderRadius: "2px",
     position: "relative",
@@ -257,18 +272,15 @@ const styles = {
     flexShrink: 0,
   },
   abacusWire: { position: "absolute", width: "2px", height: "100%", background: "#6080E8" },
-  bead: { width: window.innerWidth <= 768 ? "5px" : "8px", height: window.innerWidth <= 768 ? "3px" : "4px", background: "#6080E8", borderRadius: "1px", zIndex: 1 },
-  vedicSymbol: { width: window.innerWidth <= 768 ? "14px" : "20px", height: window.innerWidth <= 768 ? "14px" : "20px", border: "1px solid #6080E8", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", transform: "rotate(45deg)", flexShrink: 0 },
-  innerCircle: { width: window.innerWidth <= 768 ? "6px" : "10px", height: window.innerWidth <= 768 ? "6px" : "10px", border: "1px solid #6080E8" },
+  bead: { width: "8px", height: "4px", background: "#6080E8", borderRadius: "1px", zIndex: 1 },
+  vedicSymbol: { width: "20px", height: "20px", border: "1px solid #6080E8", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", transform: "rotate(45deg)", flexShrink: 0 },
+  innerCircle: { width: "10px", height: "10px", border: "1px solid #6080E8" },
 
-  // =====================================
-  // MASTER APPLICATION LAYOUT FRAME
-  // =====================================
   layout: {
     width: "100%",
     height: "100vh",
     overflow: "hidden",
-    background: "#f5f7fb",
+    background: "var(--bg-layout)", 
     display: "flex",
     flexDirection: "column"
   },
@@ -279,13 +291,13 @@ const styles = {
     overflow: "hidden",
   },
   topbar: {
-    height: window.innerWidth <= 768 ? "60px" : "72px",
-    background: "#ffffff",
+    height: "72px",
+    background: "var(--bg-surface)", 
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    borderBottom: "1px solid #e5e7eb",
-    boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
+    borderBottom: "1px solid var(--border-main)", 
+    boxShadow: "0 2px 12px var(--shadow-light)", 
     position: "sticky",
     top: 0,
     zIndex: 999,
@@ -293,7 +305,7 @@ const styles = {
   },
   logoSection: {
     height: "100%",
-    background: "#1E1E2D",
+    background: "#1E1E2D", 
     display: "flex",
     alignItems: "center",
     gap: "15px",
@@ -301,15 +313,14 @@ const styles = {
     transition: "all 0.3s ease",
     overflow: "hidden",
     flexShrink: 0,
+    // borderBottom: "1px solid #e2e8f0", 
+    // boxSizing: "border-box"
   },
-  menuButton: { background: "transparent", border: "none", color: "#ffffff", fontSize: window.innerWidth <= 768 ? "22px" : "26px", cursor: "pointer", minWidth: "30px" },
+  menuButton: { background: "transparent", border: "none", color: "#ffffff", fontSize: "26px", cursor: "pointer", minWidth: "30px" },
   logoText: { color: "#ffffff", fontSize: "1.2rem", fontWeight: "750", letterSpacing: "0.5px", whiteSpace: "nowrap" },
 
-  // =====================================
-  // SIDEBAR CONFIGS
-  // =====================================
   sidebar: {
-    background: "#1E1E2D",
+    background: "#1E1E2D", 
     transition: "all 0.3s ease",
     display: "flex",
     flexDirection: "column",
@@ -330,21 +341,17 @@ const styles = {
     gap: "8px",
     padding: "20px 12px",
   },
-
-  /* OPEN LINK SYSTEM */
   linkOpen: {
     color: "rgba(255,255,255,0.75)", textDecoration: "none", padding: "12px 16px", borderRadius: "10px",
-    fontWeight: "500", fontSize: "15px", display: "flex", alignItems: "center", justifyContent: "flex-start", // 🌟 Increased to 15px
+    fontWeight: "500", fontSize: "15px", display: "flex", alignItems: "center", justifyContent: "flex-start",
     gap: "14px", minHeight: "46px", transition: "all 0.2s ease", whiteSpace: "nowrap", cursor: "pointer"
   },
   activeLinkOpen: {
     background: "linear-gradient(135deg,#6080E8,#7C94F2)", color: "#ffffff", textDecoration: "none",
-    padding: "12px 16px", borderRadius: "10px", fontWeight: "700", fontSize: "15px", display: "flex", // 🌟 Increased to 15px
+    padding: "12px 16px", borderRadius: "10px", fontWeight: "700", fontSize: "15px", display: "flex",
     alignItems: "center", justifyContent: "flex-start", gap: "14px", minHeight: "46px", whiteSpace: "nowrap",
     boxShadow: "0 6px 14px rgba(96,128,232,0.3)", cursor: "pointer"
   },
-
-  /* CLOSED ICON PANEL LINK SYSTEM */
   linkClosed: {
     color: "rgba(255,255,255,0.75)", textDecoration: "none", padding: "12px 0", borderRadius: "10px",
     fontWeight: "500", display: "flex", alignItems: "center", justifyContent: "center", minHeight: "46px",
@@ -356,18 +363,16 @@ const styles = {
     justifyContent: "center", minHeight: "46px", width: "46px", margin: "0 auto",
     boxShadow: "0 4px 12px rgba(96,128,232,0.35)", cursor: "pointer"
   },
-
   iconStyle: {
-    fontSize: "18px", // 🌟 Increased slightly to match new font balance
-    display: "inline-flex", alignItems: "center", justifyContent: "center",
+    fontSize: "18px", display: "inline-flex", alignItems: "center", justifyContent: "center",
     width: "22px", textAlign: "center", flexShrink: 0
   },
   logout: {
     margin: "16px", background: "linear-gradient(135deg,#ef4444,#dc2626)", color: "#ffffff",
     border: "none", padding: "12px", borderRadius: "10px", cursor: "pointer", fontWeight: "700",
-    fontSize: "15px", flexShrink: 0 // 🌟 Increased to 15px
+    fontSize: "15px", flexShrink: 0
   },
   content: {
-    flex: 1, overflowY: "auto", padding: "25px", background: "#f5f7fb", height: "100%"
+    flex: 1, overflowY: "auto", padding: "25px", background: "var(--bg-layout)", height: "100%"
   }
 };

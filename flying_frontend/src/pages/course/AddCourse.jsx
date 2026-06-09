@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import API from "../../api";
 
 export default function AddCourse({ isOpen, id, onClose, onSuccess }) {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth <= 600 : false
+  );
   const [formData, setFormData] = useState({
     course_type: "",
     level: "",
@@ -9,6 +12,13 @@ export default function AddCourse({ isOpen, id, onClose, onSuccess }) {
     duration: "",
     description: "",
   });
+
+  // Track viewport resizing for dynamic layout adjustment
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 600);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (isOpen && id) {
@@ -81,8 +91,11 @@ export default function AddCourse({ isOpen, id, onClose, onSuccess }) {
         </div>
 
         <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.formGrid}>
-            <div style={styles.inputContainer}>
+          <div style={{
+            ...styles.formGrid,
+            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr"
+          }}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Course Program Type *</label>
               <select
                 name="course_type"
@@ -97,7 +110,7 @@ export default function AddCourse({ isOpen, id, onClose, onSuccess }) {
               </select>
             </div>
 
-            <div style={styles.inputContainer}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Academic Level *</label>
               <select
                 name="level"
@@ -116,7 +129,7 @@ export default function AddCourse({ isOpen, id, onClose, onSuccess }) {
               </select>
             </div>
 
-            <div style={styles.inputContainer}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Tuition Base Fees (₹) *</label>
               <input
                 type="number"
@@ -129,7 +142,7 @@ export default function AddCourse({ isOpen, id, onClose, onSuccess }) {
               />
             </div>
 
-            <div style={styles.inputContainer}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Expected Duration Track *</label>
               <input
                 type="text"
@@ -142,7 +155,7 @@ export default function AddCourse({ isOpen, id, onClose, onSuccess }) {
               />
             </div>
 
-            <div style={{ ...styles.inputContainer, gridColumn: "span 2" }}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "span 2" }}>
               <label style={styles.fieldLabel}>Syllabus Summary / Description</label>
               <textarea
                 name="description"
@@ -154,7 +167,11 @@ export default function AddCourse({ isOpen, id, onClose, onSuccess }) {
             </div>
           </div>
 
-          <div style={styles.actionRow}>
+          <div style={{
+            ...styles.actionRow,
+            flexDirection: isMobile ? "column-reverse" : "row",
+            alignItems: isMobile ? "stretch" : "center"
+          }}>
             <button type="button" style={styles.cancelBtn} onClick={onClose}>
               Cancel
             </button>
@@ -175,7 +192,7 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(15, 23, 42, 0.4)",
+    backgroundColor: "rgba(0, 0, 0, 0.65)", // Darkened overlay mask configuration
     backdropFilter: "blur(5px)",
     WebkitBackdropFilter: "blur(5px)",
     display: "flex",
@@ -186,10 +203,11 @@ const styles = {
     boxSizing: "border-box",
   },
   modalCard: {
-    background: "#fff",
+    background: "var(--bg-card)", // 👈 Variable
+    border: "1px solid var(--border-main)", // 🌟 Polished highlighted outer edge tracking frame 
     padding: "30px",
     borderRadius: "14px",
-    boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)", // Heightened shadow configuration logic
     width: "100%",
     maxWidth: "560px",
     maxHeight: "90vh",
@@ -200,7 +218,7 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    borderBottom: "1px solid #f1f5f9",
+    borderBottom: "1px solid var(--border-main)", // 👈 Variable
     paddingBottom: "16px",
     marginBottom: "20px",
   },
@@ -212,19 +230,19 @@ const styles = {
   title: {
     fontSize: "20px",
     fontWeight: "700",
-    color: "#1e293b",
+    color: "var(--text-main)", // 👈 Variable
     margin: 0,
   },
   subtitle: {
     fontSize: "13px",
-    color: "#64748b",
+    color: "var(--text-muted)", // 👈 Variable
     margin: 0,
   },
   closeX: {
     background: "none",
     border: "none",
     fontSize: "24px",
-    color: "#94a3b8",
+    color: "var(--text-muted)", // 👈 Variable
     cursor: "pointer",
     padding: "0 4px",
     lineHeight: "1",
@@ -236,80 +254,83 @@ const styles = {
   },
   formGrid: {
     display: "grid",
-    gridTemplateColumns: window.innerWidth <= 600 ? "1fr" : "1fr 1fr",
     gap: "16px",
   },
   inputContainer: {
     display: "flex",
     flexDirection: "column",
     gap: "6px",
-    gridColumn: window.innerWidth <= 600 ? "span 2" : "initial",
   },
   fieldLabel: {
     fontSize: "12px",
     fontWeight: "600",
-    color: "#475569",
+    color: "var(--text-muted)", // 👈 Variable
   },
   input: {
     padding: "10px 14px",
     borderRadius: "6px",
-    border: "1px solid #cbd5e1",
+    border: "1px solid var(--border-main)", // 👈 Variable
+    background: "var(--bg-surface)", // 👈 Variable
     fontSize: "14px",
     outline: "none",
-    color: "#334155",
+    color: "var(--text-main)", // 👈 Variable
     boxSizing: "border-box",
     width: "100%",
   },
   select: {
     padding: "10px 14px",
     borderRadius: "6px",
-    border: "1px solid #cbd5e1",
+    border: "1px solid var(--border-main)", // 👈 Variable
+    background: "var(--bg-surface)", // 👈 Variable
     fontSize: "14px",
     outline: "none",
-    color: "#334155",
+    color: "var(--text-main)", // 👈 Variable
     boxSizing: "border-box",
     width: "100%",
-    background: "#fff",
     cursor: "pointer",
   },
   textarea: {
     padding: "10px 14px",
     borderRadius: "6px",
-    border: "1px solid #cbd5e1",
+    border: "1px solid var(--border-main)", // 👈 Variable
+    background: "var(--bg-surface)", // 👈 Variable
     fontSize: "14px",
     outline: "none",
-    color: "#334155",
+    color: "var(--text-main)", // 👈 Variable
     boxSizing: "border-box",
     width: "100%",
     minHeight: "90px",
     resize: "vertical",
+    fontFamily: "inherit"
   },
   actionRow: {
     display: "flex",
     gap: "12px",
     justifyContent: "flex-end",
-    borderTop: "1px solid #f1f5f9",
+    borderTop: "1px solid var(--border-main)", // 👈 Variable
     paddingTop: "16px",
   },
   cancelBtn: {
-    background: "#fff",
-    color: "#475569",
-    border: "1px solid #cbd5e1",
-    padding: "8px 16px",
+    background: "transparent",
+    color: "var(--text-main)", // 👈 Variable
+    border: "1px solid var(--border-main)", // 👈 Variable
+    padding: "10px 16px",
     borderRadius: "6px",
     cursor: "pointer",
     fontWeight: "600",
     fontSize: "13px",
+    textAlign: "center"
   },
   submitBtn: {
     background: "#6080E8",
     color: "#fff",
     border: "none",
-    padding: "8px 16px",
+    padding: "10px 16px",
     borderRadius: "6px",
     cursor: "pointer",
     fontWeight: "600",
     fontSize: "13px",
     boxShadow: "0 2px 4px rgba(96, 128, 232, 0.15)",
+    textAlign: "center"
   },
 };

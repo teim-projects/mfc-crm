@@ -72,7 +72,7 @@ export default function Promotion() {
         (student) => String(student.course) === String(courseId)
       );
       setStudents(filtered);
-      setSelectedStudents([]); // Reset checkboxes on load
+      setSelectedStudents([]); 
     } catch (err) {
       console.log(err);
     }
@@ -190,7 +190,13 @@ export default function Promotion() {
 
           <button 
             type="button" 
-            style={{ ...styles.primaryButton, width: isMobile ? "100%" : "auto", alignSelf: "flex-end" }} 
+            style={{ 
+              ...styles.primaryButton, 
+              width: isMobile ? "100%" : "auto", 
+              alignSelf: isMobile ? "stretch" : "flex-end",
+              whiteSpace: isMobile ? "normal" : "nowrap", // 🌟 Wraps cleanly into two lines on small screens
+              padding: isMobile ? "6px 16px" : "10px 20px"  // 🌟 Balance height when text splits
+            }} 
             onClick={loadStudents}
           >
             🔍 Load Active Students
@@ -227,7 +233,7 @@ export default function Promotion() {
                         style={styles.checkbox}
                       />
                     </td>
-                    <td style={{ ...styles.td, fontWeight: "600", color: "#1e293b" }}>
+                    <td style={{ ...styles.td, fontWeight: "600", color: "var(--text-main)" }}>
                       {student.student_name}
                     </td>
                     <td style={styles.td}>{student.parent_name || "—"}</td>
@@ -274,7 +280,8 @@ export default function Promotion() {
               type="button"
               style={{
                 ...styles.promoteButton,
-                marginTop: isMobile ? "10px" : "18px"
+                marginTop: isMobile ? "10px" : "18px",
+                width: isMobile ? "100%" : "auto"
               }}
               onClick={promoteStudents}
             >
@@ -293,29 +300,29 @@ const styles = {
   titleSection: { display: "flex", flexDirection: "column", gap: "4px" },
   headingWrapper: { display: "flex", alignItems: "center", gap: "10px" },
   verticalLine: { width: "4px", height: "24px", backgroundColor: "#6080E8", borderRadius: "2px", flexShrink: 0 },
-  title: { fontSize: "22px", fontWeight: "700", color: "#1e293b", margin: 0, lineHeight: "1.2" },
-  subtitle: { fontSize: "13px", color: "#64748b", margin: 0, paddingLeft: "14px" },
+  title: { fontSize: "22px", fontWeight: "700", color: "var(--text-main)", margin: 0, lineHeight: "1.2" },
+  subtitle: { fontSize: "13px", color: "var(--text-muted)", margin: 0, paddingLeft: "14px" },
   
-  /* CRUNCHED CARDS FILTER COMPONENT BOX */
-  filterBox: { background: "#fff", border: "1px solid #e2e8f0", padding: "16px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.02)", display: "flex", flexDirection: "column", gap: "14px", marginBottom: "20px" },
+  /* CARDS FILTER COMPONENT BOX */
+  filterBox: { background: "var(--bg-card)", border: "1px solid var(--border-main)", padding: "16px", borderRadius: "12px", boxShadow: "0 1px 3px var(--shadow-light)", display: "flex", flexDirection: "column", gap: "14px", marginBottom: "20px" },
   filterGrid: { display: "grid", gap: "12px", width: "100%" },
   inputGroup: { display: "flex", flexDirection: "column", gap: "6px" },
-  label: { fontSize: "11px", fontWeight: "700", color: "#94a3b8", letterSpacing: "0.05em", textTransform: "uppercase" },
-  select: { padding: "10px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "14px", color: "#334155", background: "#fff", outline: "none", cursor: "pointer", width: "100%", boxSizing: "border-box" },
+  label: { fontSize: "11px", fontWeight: "700", color: "var(--text-muted)", letterSpacing: "0.05em", textTransform: "uppercase" },
+  select: { padding: "10px 12px", borderRadius: "8px", border: "1px solid var(--border-main)", fontSize: "14px", color: "var(--text-main)", background: "var(--bg-surface)", outline: "none", cursor: "pointer", width: "100%", boxSizing: "border-box" },
   
-  primaryButton: { background: "#6080E8", color: "#fff", border: "none", padding: "10px 20px", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "13px", whiteSpace: "nowrap", boxShadow: "0 2px 4px rgba(96, 128, 232, 0.15)", boxSizing: "border-box", height: "40px" },
+  primaryButton: { background: "#6080E8", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "13px", boxShadow: "0 2px 4px rgba(96, 128, 232, 0.15)", boxSizing: "border-box", minHeight: "40px", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center" },
   
-  /* COMPACT DATA SYSTEM DISPLAY TABLES */
-  tableWrapper: { width: "100%", background: "#fff", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.02)", overflowX: "auto", WebkitOverflowScrolling: "touch", marginBottom: "20px" },
+  /* DATA SYSTEM DISPLAY TABLES */
+  tableWrapper: { width: "100%", background: "var(--bg-card)", borderRadius: "12px", border: "1px solid var(--border-main)", boxShadow: "0 1px 3px var(--shadow-light)", overflowX: "auto", WebkitOverflowScrolling: "touch", marginBottom: "20px" },
   table: { width: "100%", borderCollapse: "collapse", minWidth: "600px" },
-  th: { background: "#f8fafc", padding: "14px 20px", textAlign: "left", fontSize: "11px", fontWeight: "600", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #e2e8f0", whiteSpace: "nowrap" },
-  tr: { borderBottom: "1px solid #f1f5f9" },
-  td: { padding: "14px 20px", fontSize: "14px", color: "#334155", whiteSpace: "nowrap", verticalAlign: "middle" },
-  levelBadge: { display: "inline-block", background: "#f1f5f9", color: "#475569", padding: "4px 8px", borderRadius: "6px", fontSize: "12px", fontWeight: "600" },
+  th: { background: "var(--bg-table-th)", padding: "14px 20px", textAlign: "left", fontSize: "11px", fontWeight: "600", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid var(--border-main)", whiteSpace: "nowrap" },
+  tr: { borderBottom: "1px solid var(--border-light)" },
+  td: { padding: "14px 20px", fontSize: "14px", color: "var(--text-td)", whiteSpace: "nowrap", verticalAlign: "middle" },
+  levelBadge: { display: "inline-block", background: "rgba(96, 128, 232, 0.12)", color: "#7C94F2", padding: "4px 8px", borderRadius: "6px", fontSize: "12px", fontWeight: "600" },
   checkbox: { width: "16px", height: "16px", accentColor: "#6080E8", cursor: "pointer" },
-  emptyState: { padding: "60px 20px", textAlign: "center", color: "#64748b", fontSize: "14px" },
+  emptyState: { padding: "60px 20px", textAlign: "center", color: "var(--text-muted)", fontSize: "14px" },
   
   /* FOOTER CONTEXT BOX CONTROLS */
-  bottomBox: { background: "#fff", border: "1px solid #e2e8f0", padding: "16px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.02)", display: "flex", gap: "16px", justifyContent: "space-between" },
+  bottomBox: { background: "var(--bg-card)", border: "1px solid var(--border-main)", padding: "16px", borderRadius: "12px", boxShadow: "0 1px 3px var(--shadow-light)", display: "flex", gap: "16px", justifyContent: "space-between" },
   promoteButton: { background: "#10b981", color: "#fff", border: "none", borderRadius: "8px", padding: "10px 24px", cursor: "pointer", fontWeight: "600", fontSize: "13px", height: "40px", boxShadow: "0 2px 4px rgba(16, 185, 129, 0.15)", boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center" }
 };

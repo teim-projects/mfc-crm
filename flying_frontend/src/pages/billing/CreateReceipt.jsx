@@ -9,13 +9,15 @@ export default function CreateReceipt({ isOpen, schoolId, studentId, onClose, on
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [searchProduct, setSearchProduct] = useState("");
   const [showProductDropdown, setShowProductDropdown] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 640);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth <= 640 : false
+  );
   const [isNewStudent, setIsNewStudent] = useState(false);
   
   // Custom course sub-category filtering tab state
   const [productCourseType, setProductCourseType] = useState("all"); 
 
-  // 🌟 Added: Secure DOM node reference to isolate search bounds and prevent modal click-leaks
+  // Secure DOM node reference to isolate search bounds and prevent modal click-leaks
   const searchContainerRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -46,7 +48,7 @@ export default function CreateReceipt({ isOpen, schoolId, studentId, onClose, on
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // 🌟 Added: Click-Away Listener to close search menu without affecting layout bubbling
+  // Click-Away Listener to close search menu without affecting layout bubbling
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
@@ -410,7 +412,7 @@ export default function CreateReceipt({ isOpen, schoolId, studentId, onClose, on
             <h3 style={styles.sectionTitle}>Add Items</h3>
             <div style={styles.itemAddSection}>
               
-              {/* 🌟 Attached searchContainerRef to safely contain search focus clicks */}
+              {/* Attached searchContainerRef to safely contain search focus clicks */}
               <div ref={searchContainerRef} style={styles.productSearchWrapper}>
                 <div style={styles.searchBarLabelRow}>
                   <label style={styles.label}>Search Product Inventory *</label>
@@ -449,7 +451,7 @@ export default function CreateReceipt({ isOpen, schoolId, studentId, onClose, on
                               <span style={styles.dropdownBadge}>
                                 {product.course_type === "vedic_maths" ? "Vedic" : product.course_type === "abacus" ? "Abacus" : "General"}
                               </span>
-                              {product.course_level && <span style={{...styles.dropdownBadge, background: "#f1f5f9", color: "#475569"}}>Lvl {product.course_level}</span>}
+                              {product.course_level && <span style={{...styles.dropdownBadge, background: "var(--bg-layout)", color: "var(--text-muted)"}}>Lvl {product.course_level}</span>}
                             </div>
                           </div>
                           <div style={styles.productPrice}>₹{Number(product.unit_price || 0).toFixed(2)}</div>
@@ -481,7 +483,7 @@ export default function CreateReceipt({ isOpen, schoolId, studentId, onClose, on
 
                 <div style={styles.itemField}>
                   <label style={styles.label}>Available Stock</label>
-                  <input type="text" style={{ ...styles.input, backgroundColor: "#f8fafc", fontFamily: "monospace", fontWeight: "600" }} value={currentItem.product_id ? `${currentItem.available_stock} Units` : "—"} readOnly />
+                  <input type="text" style={{ ...styles.input, backgroundColor: "var(--bg-layout)", fontFamily: "monospace", fontWeight: "600" }} value={currentItem.product_id ? `${currentItem.available_stock} Units` : "—"} readOnly />
                 </div>
               </div>
 
@@ -506,10 +508,10 @@ export default function CreateReceipt({ isOpen, schoolId, studentId, onClose, on
                   <tbody>
                     {formData.items.map(item => (
                       <tr key={item.id} style={styles.tableTr}>
-                        <td style={{ ...styles.tableTd, fontWeight: "600", color: "#1e293b" }}>{item.product_name}</td>
-                        <td style={{ ...styles.tableTd, textAlign: "center", fontWeight: "700", color: "#475569" }}>{item.quantity}</td>
+                        <td style={{ ...styles.tableTd, fontWeight: "600", color: "var(--text-main)" }}>{item.product_name}</td>
+                        <td style={{ ...styles.tableTd, textAlign: "center", fontWeight: "700", color: "var(--text-muted)" }}>{item.quantity}</td>
                         <td style={styles.tableTd}>₹{item.rate.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                        <td style={{ ...styles.tableTd, fontWeight: "700", color: "#0f172a" }}>₹{item.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                        <td style={{ ...styles.tableTd, fontWeight: "700", color: "var(--text-main)" }}>₹{item.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                         <td style={{ ...styles.tableTd, textAlign: "center" }}>
                           <button type="button" style={styles.removeButton} onClick={() => handleRemoveItem(item.id)}>&times;</button>
                         </td>
@@ -531,8 +533,8 @@ export default function CreateReceipt({ isOpen, schoolId, studentId, onClose, on
               <span style={styles.summaryLabel}>Deducted Discount:</span>
               <span style={{ ...styles.summaryVal, color: "#ef4444" }}>- ₹{parseFloat(formData.discount || 0).toFixed(2)}</span>
             </div>
-            <div style={{ ...styles.summaryRow, borderTop: "1px dashed #cbd5e1", paddingTop: "8px", marginTop: "4px" }}>
-              <span style={{ fontSize: "14px", fontWeight: "700", color: "#0f172a" }}>Grand Net Total:</span>
+            <div style={{ ...styles.summaryRow, borderTop: "1px dashed var(--border-main)", paddingTop: "8px", marginTop: "4px" }}>
+              <span style={{ fontSize: "14px", fontWeight: "700", color: "var(--text-main)" }}>Grand Net Total:</span>
               <span style={{ fontSize: "16px", color: "#6080E8", fontWeight: "700" }}>₹{grandTotal.toFixed(2)}</span>
             </div>
           </div>
@@ -544,7 +546,11 @@ export default function CreateReceipt({ isOpen, schoolId, studentId, onClose, on
           </div>
 
           {/* ACTION BUTTON RUNNERS */}
-          <div style={styles.footerActions}>
+          <div style={{
+            ...styles.footerActions,
+            flexDirection: isMobile ? "column-reverse" : "row",
+            alignItems: isMobile ? "stretch" : "center"
+          }}>
             <button type="button" style={styles.cancelButton} onClick={onClose}>Cancel</button>
             <button type="submit" style={styles.submitButton} disabled={loading}>
               {loading ? "Creating..." : "Create Receipt"}
@@ -557,56 +563,56 @@ export default function CreateReceipt({ isOpen, schoolId, studentId, onClose, on
 }
 
 const styles = {
-  overlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, padding: "12px", boxSizing: "border-box" },
-  modalCard: { background: "#fff", borderRadius: "16px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)", width: "100%", maxWidth: "740px", maxHeight: "90vh", overflowY: "auto", boxSizing: "border-box" },
-  modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "24px 24px 0 24px", borderBottom: "1px solid #f1f5f9", paddingBottom: "16px", marginBottom: "8px" },
-  modalTitle: { fontSize: "20px", fontWeight: "700", color: "#1e293b", margin: 0 },
-  modalSubtitle: { fontSize: "13px", color: "#64748b", margin: "4px 0 0 0" },
-  closeX: { background: "none", border: "none", fontSize: "28px", color: "#94a3b8", cursor: "pointer", lineHeight: "1", padding: "0" },
+  overlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0, 0, 0, 0.65)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, padding: "12px", boxSizing: "border-box" },
+  modalCard: { background: "var(--bg-card)", border: "1px solid var(--border-main)", borderRadius: "16px", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)", width: "100%", maxWidth: "740px", maxHeight: "90vh", overflowY: "auto", boxSizing: "border-box" },
+  modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "24px 24px 0 24px", borderBottom: "1px solid var(--border-main)", paddingBottom: "16px", marginBottom: "8px" },
+  modalTitle: { fontSize: "20px", fontWeight: "700", color: "var(--text-main)", margin: 0 },
+  modalSubtitle: { fontSize: "13px", color: "var(--text-muted)", margin: "4px 0 0 0" },
+  closeX: { background: "none", border: "none", fontSize: "28px", color: "var(--text-muted)", cursor: "pointer", lineHeight: "1", padding: "0" },
   form: { padding: "24px", display: "flex", flexDirection: "column", gap: "20px" },
   section: { marginBottom: "4px" },
-  sectionTitle: { fontSize: "12px", fontWeight: "700", color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "14px", paddingBottom: "6px", borderBottom: "1px solid #f1f5f9" },
+  sectionTitle: { fontSize: "12px", fontWeight: "700", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "14px", paddingBottom: "6px", borderBottom: "1px solid var(--border-main)" },
   formGrid: { display: "grid", gap: "14px" },
   formGroup: { display: "flex", flexDirection: "column", gap: "6px" },
-  label: { fontSize: "11.5px", fontWeight: "600", color: "#475569" },
-  input: { padding: "10px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none", color: "#334155", width: "100%", boxSizing: "border-box" },
-  select: { padding: "10px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none", color: "#334155", width: "100%", boxSizing: "border-box", background: "#fff", cursor: "pointer" },
-  textarea: { padding: "10px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none", resize: "none", width: "100%", boxSizing: "border-box", color: "#334155", fontFamily: "inherit" },
-  itemAddSection: { display: "flex", flexDirection: "column", gap: "14px", background: "#f8fafc", padding: "16px", borderRadius: "10px", border: "1px solid #e2e8f0" },
+  label: { fontSize: "11.5px", fontWeight: "600", color: "var(--text-muted)" },
+  input: { padding: "10px 12px", borderRadius: "6px", border: "1px solid var(--border-main)", background: "var(--bg-surface)", fontSize: "14px", outline: "none", color: "var(--text-main)", width: "100%", boxSizing: "border-box" },
+  select: { padding: "10px 12px", borderRadius: "6px", border: "1px solid var(--border-main)", background: "var(--bg-surface)", fontSize: "14px", outline: "none", color: "var(--text-main)", width: "100%", boxSizing: "border-box", cursor: "pointer" },
+  textarea: { padding: "10px 12px", borderRadius: "6px", border: "1px solid var(--border-main)", background: "var(--bg-surface)", fontSize: "14px", outline: "none", resize: "none", width: "100%", boxSizing: "border-box", color: "var(--text-main)", fontFamily: "inherit" },
+  itemAddSection: { display: "flex", flexDirection: "column", gap: "14px", background: "var(--bg-layout)", padding: "16px", borderRadius: "10px", border: "1px solid var(--border-main)" },
   productSearchWrapper: { position: "relative" },
   searchBarLabelRow: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", gap: "10px", flexWrap: "wrap" },
   
-  tabContainer: { display: "flex", gap: "4px", background: "#f1f5f9", padding: "3px", borderRadius: "6px", border: "1px solid #e2e8f0" },
-  tab: { background: "transparent", border: "none", color: "#64748b", padding: "4px 10px", fontSize: "11px", fontWeight: "600", borderRadius: "4px", cursor: "pointer" },
-  activeTab: { background: "#fff", border: "none", color: "#6080E8", padding: "4px 10px", fontSize: "11px", fontWeight: "700", borderRadius: "4px", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", cursor: "default" },
+  tabContainer: { display: "flex", gap: "4px", background: "var(--bg-surface)", padding: "3px", borderRadius: "6px", border: "1px solid var(--border-main)" },
+  tab: { background: "transparent", border: "none", color: "var(--text-muted)", padding: "4px 10px", fontSize: "11px", fontWeight: "600", borderRadius: "4px", cursor: "pointer" },
+  activeTab: { background: "var(--bg-card)", border: "none", color: "#6080E8", padding: "4px 10px", fontSize: "11px", fontWeight: "700", borderRadius: "4px", boxShadow: "0 1px 2px var(--shadow-light)", cursor: "default" },
 
-  productDropdown: { position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid #cbd5e1", borderRadius: "8px", maxHeight: "180px", overflowY: "auto", zIndex: 2015, boxShadow: "0 10px 15px -3px rgba(0,0,0,0.08)" },
-  productDropdownItem: { padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "background 0.2s" },
+  productDropdown: { position: "absolute", top: "100%", left: 0, right: 0, background: "var(--bg-card)", border: "1px solid var(--border-main)", borderRadius: "8px", maxHeight: "180px", overflowY: "auto", zIndex: 2015, boxShadow: "0 10px 15px -3px rgba(0,0,0,0.3)" },
+  productDropdownItem: { padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid var(--border-light)", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "background 0.2s" },
   productMetaLeft: { display: "flex", flexDirection: "column", gap: "2px" },
-  productName: { fontWeight: "600", fontSize: "13.5px", color: "#1e293b" },
+  productName: { fontWeight: "600", fontSize: "13.5px", color: "var(--text-main)" },
   productSubtitleRow: { display: "flex", gap: "6px", alignItems: "center" },
-  productCode: { fontSize: "11px", color: "#64748b", fontFamily: "monospace" },
-  dropdownBadge: { fontSize: "10px", fontWeight: "700", padding: "2px 6px", borderRadius: "4px", background: "#eff6ff", color: "#3b82f6", textTransform: "uppercase" },
+  productCode: { fontSize: "11px", color: "var(--text-muted)", fontFamily: "monospace" },
+  dropdownBadge: { fontSize: "10px", fontWeight: "700", padding: "2px 6px", borderRadius: "4px", background: "rgba(96, 128, 232, 0.15)", color: "#7C94F2", textTransform: "uppercase" },
   productPrice: { fontSize: "13.5px", color: "#6080E8", fontWeight: "700" },
-  dropdownEmptyState: { padding: "20px", fontSize: "13px", color: "#64748b", textAlign: "center", background: "#fff" },
+  dropdownEmptyState: { padding: "20px", fontSize: "13px", color: "var(--text-muted)", textAlign: "center", background: "var(--bg-card)" },
 
   itemRow: { display: "grid", gap: "12px", alignItems: "end" },
   itemField: { display: "flex", flexDirection: "column", gap: "6px" },
-  addButton: { background: "#fff", color: "#6080E8", border: "1px solid #6080E8", padding: "10px 14px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px", width: "100%", textAlign: "center", boxSizing: "border-box" },
+  addButton: { background: "transparent", color: "#6080E8", border: "1px solid #6080E8", padding: "10px 14px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px", width: "100%", textAlign: "center", boxSizing: "border-box" },
   
   /* GRID LAYOUT DATA SHEET HEADERS AND LINES REINFORCEMENTS */
-  itemsTableWrapper: { width: "100%", overflowX: "auto", background: "#fff", borderRadius: "8px", border: "1px solid #e2e8f0", WebkitOverflowScrolling: "touch", marginTop: "4px" },
+  itemsTableWrapper: { width: "100%", overflowX: "auto", background: "var(--bg-card)", borderRadius: "8px", border: "1px solid var(--border-main)", WebkitOverflowScrolling: "touch", marginTop: "4px" },
   itemsTable: { width: "100%", borderCollapse: "collapse", minWidth: "560px", textAlign: "left" },
-  tableTh: { background: "#f8fafc", padding: "10px 14px", fontSize: "11px", fontWeight: "700", color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #e2e8f0", borderRight: "1px solid #e2e8f0" },
-  tableTr: { borderBottom: "1px solid #e2e8f0" },
-  tableTd: { padding: "10px 14px", fontSize: "13.5px", color: "#475569", verticalAlign: "middle", borderRight: "1px solid #f1f5f9" },
+  tableTh: { background: "var(--bg-table-th)", padding: "10px 14px", fontSize: "11px", fontWeight: "700", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid var(--border-main)", borderRight: "1px solid var(--border-main)" },
+  tableTr: { borderBottom: "1px solid var(--border-main)" },
+  tableTd: { padding: "10px 14px", fontSize: "13.5px", color: "var(--text-td)", verticalAlign: "middle", borderRight: "1px solid var(--border-light)" },
   removeButton: { background: "none", border: "none", color: "#ef4444", fontSize: "22px", cursor: "pointer", padding: "0 4px", lineHeight: "1" },
   
-  summaryBox: { marginLeft: "auto", width: "100%", maxWidth: "260px", display: "flex", flexDirection: "column", gap: "6px", background: "#f8fafc", padding: "12px", borderRadius: "8px", border: "1px solid #e2e8f0", boxSizing: "border-box" },
-  summaryLabel: { fontSize: "12px", color: "#64748b", fontWeight: "500" },
-  summaryVal: { fontSize: "13px", color: "#1e293b", fontWeight: "600" },
+  summaryBox: { marginLeft: "auto", width: "100%", maxWidth: "260px", display: "flex", flexDirection: "column", gap: "6px", background: "var(--bg-layout)", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-main)", boxSizing: "border-box" },
+  summaryLabel: { fontSize: "12px", color: "var(--text-muted)", fontWeight: "500" },
+  summaryVal: { fontSize: "13px", color: "var(--text-main)", fontWeight: "600" },
   summaryRow: { display: "flex", justifyContent: "space-between", alignItems: "center" },
-  footerActions: { display: "flex", gap: "12px", justifyContent: "flex-end", borderTop: "1px solid #f1f5f9", paddingTop: "14px" },
-  cancelButton: { background: "#fff", color: "#475569", border: "1px solid #cbd5e1", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px" },
-  submitButton: { background: "#6080E8", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px" },
+  footerActions: { display: "flex", gap: "12px", justifyContent: "flex-end", borderTop: "1px solid var(--border-main)", paddingTop: "14px" },
+  cancelButton: { background: "transparent", color: "var(--text-main)", border: "1px solid var(--border-main)", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px", textAlign: "center" },
+  submitButton: { background: "#6080E8", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px", textAlign: "center" },
 };

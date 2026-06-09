@@ -4,7 +4,7 @@ import API from "../../api";
 import Sidebar from "../../components/Sidebar";
 import CreateReceipt from "./CreateReceipt"; 
 import AdvancedTableFilter from "../../components/AdvancedTableFilter"; 
-import Pagination from "../../components/Pagination"; // Pagination Component
+import Pagination from "../../components/Pagination";
 
 export default function SchoolStudents() {
   const { schoolId } = useParams();
@@ -30,22 +30,22 @@ export default function SchoolStudents() {
     typeof window !== "undefined" ? window.innerWidth : 1200
   );
 
- useEffect(() => {
-  const initializeData = async () => {
-    setLoading(true);
-    await fetchSchoolDetails();
-    // 🌟 Step 1: Fetch receipts FIRST so the mapping object exists before filtering students
-    const receiptsMap = await fetchAllReceipts();
-    // 🌟 Step 2: Pass that map directly to the student fetch pipeline
-    await fetchStudents(receiptsMap);
-  };
+  useEffect(() => {
+    const initializeData = async () => {
+      setLoading(true);
+      await fetchSchoolDetails();
+      // Fetch receipts FIRST so the mapping object exists before filtering students
+      const receiptsMap = await fetchAllReceipts();
+      // Pass that map directly to the student fetch pipeline
+      await fetchStudents(receiptsMap);
+    };
 
-  initializeData();
+    initializeData();
 
-  const handleResize = () => setWindowWidth(window.innerWidth);
-  window.addEventListener("resize", handleResize);
-  return () => window.removeEventListener("resize", handleResize);
-}, [schoolId]);
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [schoolId]);
 
   // Reset page position to page 1 whenever filters change
   useEffect(() => {
@@ -62,45 +62,45 @@ export default function SchoolStudents() {
   };
 
   const fetchStudents = async (receiptsMap) => {
-  try {
-    const res = await API.get(`/billing/students-by-school/${schoolId}/`);
-    
-    // 🌟 FILTER LOGIC: Only retain students who have at least one generated invoice receipt entry mapped
-    const activeReceiptMap = receiptsMap || studentReceipts;
-    const studentsWithReceipts = res.data.filter(student => 
-      activeReceiptMap[student.id] && activeReceiptMap[student.id].length > 0
-    );
+    try {
+      const res = await API.get(`/billing/students-by-school/${schoolId}/`);
+      
+      // FILTER LOGIC: Only retain students who have at least one generated invoice receipt entry mapped
+      const activeReceiptMap = receiptsMap || studentReceipts;
+      const studentsWithReceipts = res.data.filter(student => 
+        activeReceiptMap[student.id] && activeReceiptMap[student.id].length > 0
+      );
 
-    setStudents(studentsWithReceipts);
-    setFilteredStudents(studentsWithReceipts);
-  } catch (err) {
-    console.error("Error fetching students:", err);
-  } finally {
-    setLoading(false);
-  }
-};
+      setStudents(studentsWithReceipts);
+      setFilteredStudents(studentsWithReceipts);
+    } catch (err) {
+      console.error("Error fetching students:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchAllReceipts = async () => {
-  try {
-    const res = await API.get("/billing/receipts/");
-    const receiptsByStudent = {};
-    
-    res.data.forEach(receipt => {
-      if (receipt.school === parseInt(schoolId)) {
-        if (!receiptsByStudent[receipt.student]) {
-          receiptsByStudent[receipt.student] = [];
+    try {
+      const res = await API.get("/billing/receipts/");
+      const receiptsByStudent = {};
+      
+      res.data.forEach(receipt => {
+        if (receipt.school === parseInt(schoolId)) {
+          if (!receiptsByStudent[receipt.student]) {
+            receiptsByStudent[receipt.student] = [];
+          }
+          receiptsByStudent[receipt.student].push(receipt);
         }
-        receiptsByStudent[receipt.student].push(receipt);
-      }
-    });
-    
-    setStudentReceipts(receiptsByStudent);
-    return receiptsByStudent; // 🌟 Added: Returns map for sequential data synchronizations
-  } catch (err) {
-    console.error("Error fetching receipts:", err);
-    return {};
-  }
-};
+      });
+      
+      setStudentReceipts(receiptsByStudent);
+      return receiptsByStudent; 
+    } catch (err) {
+      console.error("Error fetching receipts:", err);
+      return {};
+    }
+  };
 
   const handleViewReceipts = (student) => {
     setSelectedStudent(student);
@@ -199,9 +199,6 @@ export default function SchoolStudents() {
     );
   }
 
-  // =====================================
-  // DYNAMIC PAGINATION ENGINE
-  // =====================================
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedStudents = filteredStudents.slice(startIndex, startIndex + itemsPerPage);
@@ -262,7 +259,6 @@ export default function SchoolStudents() {
               ? "1fr 1fr" 
               : "1fr 1fr 1fr"
         }}>
-          {/* FIXED: We map over paginatedStudents so row limits apply instantly */}
           {paginatedStudents.length > 0 ? (
             paginatedStudents.map((student) => {
               const totalSpent = getTotalSpent(student.id);
@@ -297,6 +293,7 @@ export default function SchoolStudents() {
                     flexDirection: windowWidth <= 380 ? "column" : "row"
                   }}>
                     <button
+                      type="button"
                       style={styles.viewReceiptsBtn}
                       onClick={() => handleViewReceipts(student)}
                       disabled={receiptCount === 0}
@@ -304,6 +301,7 @@ export default function SchoolStudents() {
                       📋 View Receipts ({receiptCount})
                     </button>
                     <button
+                      type="button"
                       style={styles.createReceiptBtn}
                       onClick={() => handleOpenCreateModal(student.id)}
                     >
@@ -367,9 +365,9 @@ export default function SchoolStudents() {
                     {getFilteredReceipts(selectedStudent.id)
                       .sort((a, b) => new Date(b.receipt_date) - new Date(a.receipt_date))
                       .map((receipt) => (
-                        <div key={receipt.id} style={styles.receiptCard}>
+                        <div key={receipt.id} style={styles.innerReceiptCard}>
                           <div style={{
-                            ...styles.receiptHeader,
+                            ...styles.innerReceiptHeader,
                             flexDirection: windowWidth <= 420 ? "column" : "row",
                             alignItems: windowWidth <= 420 ? "flex-start" : "center",
                             gap: "8px"
@@ -405,6 +403,7 @@ export default function SchoolStudents() {
                               justifyContent: "flex-end"
                             }}>
                               <button
+                                type="button"
                                 style={{ ...styles.viewReceiptDetailsBtn, flex: windowWidth <= 480 ? 1 : "initial" }}
                                 onClick={() => {
                                   setShowReceiptModal(false);
@@ -414,6 +413,7 @@ export default function SchoolStudents() {
                                 Details
                               </button>
                               <button
+                                type="button"
                                 style={{ ...styles.printReceiptBtn, flex: windowWidth <= 480 ? 1 : "initial" }}
                                 onClick={() => handlePrintReceipt(receipt)}
                               >
@@ -429,6 +429,7 @@ export default function SchoolStudents() {
                     <p>{receiptSearchTerm ? "No receipts match that code pattern filter." : "No receipts found for this student."}</p>
                     {!receiptSearchTerm && (
                       <button
+                        type="button"
                         style={styles.createFirstBtn}
                         onClick={() => {
                           setShowReceiptModal(false);
@@ -462,7 +463,7 @@ export default function SchoolStudents() {
             <AdvancedTableFilter
               data={students}
               onFilter={setFilteredStudents}
-              setItemsPerPage={setItemsPerPage} /* Fixed hook to listen to per-page dropdown select triggers */
+              setItemsPerPage={setItemsPerPage} 
             />
           </div>
         </div>
@@ -489,61 +490,61 @@ const styles = {
   titleSection: { display: "flex", flexDirection: "column", gap: "4px" },
   headingWrapper: { display: "flex", alignItems: "center", gap: "10px" },
   verticalLine: { width: "4px", height: "24px", backgroundColor: "#6080E8", borderRadius: "2px", flexShrink: 0 },
-  title: { fontSize: "22px", fontWeight: "700", color: "#1e293b", margin: 0, lineHeight: "1.2" },
-  subtitle: { fontSize: "13px", color: "#64748b", margin: 0, paddingLeft: "14px" },
+  title: { fontSize: "22px", fontWeight: "700", color: "var(--text-main)", margin: 0, lineHeight: "1.2" },
+  subtitle: { fontSize: "13px", color: "var(--text-muted)", margin: 0, paddingLeft: "14px" },
   buttonGroup: { display: "flex", gap: "10px", alignItems: "center" },
   primaryButton: { background: "#6080E8", color: "#fff", border: "none", padding: "10px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px", whiteSpace: "nowrap", boxShadow: "0 2px 4px rgba(96, 128, 232, 0.15)", textAlign: "center", boxSizing: "border-box" },
-  secondaryButton: { background: "#fff", color: "#475569", border: "1px solid #cbd5e1", padding: "10px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px", whiteSpace: "nowrap", textAlign: "center", boxSizing: "border-box" },
+  secondaryButton: { background: "var(--bg-card)", color: "var(--text-main)", border: "1px solid var(--border-main)", padding: "10px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px", whiteSpace: "nowrap", textAlign: "center", boxSizing: "border-box" },
   studentsGrid: { display: "grid", gap: "20px" },
-  studentCard: { background: "#fff", borderRadius: "12px", border: "1px solid #e2e8f0", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" },
-  cardHeader: { padding: "20px", display: "flex", gap: "16px", borderBottom: "1px solid #f1f5f9", flexGrow: 1 },
+  studentCard: { background: "var(--bg-card)", borderRadius: "12px", border: "1px solid var(--border-main)", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 1px 3px var(--shadow-light)" },
+  cardHeader: { padding: "20px", display: "flex", gap: "16px", borderBottom: "1px solid var(--border-light)", flexGrow: 1 },
   studentAvatar: { width: "50px", height: "50px", borderRadius: "50%", background: "linear-gradient(135deg, #6080E8 0%, #4a6ad8 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "20px", fontWeight: "600", flexShrink: 0 },
   studentInfo: { flex: 1 },
-  studentName: { fontSize: "16px", fontWeight: "600", color: "#1e293b", margin: "0 0 4px 0" },
-  parentName: { fontSize: "13px", color: "#64748b", margin: "2px 0" },
-  contact: { fontSize: "12px", color: "#94a3b8", margin: "2px 0" },
-  cardStats: { display: "flex", padding: "16px 20px", gap: "20px", borderBottom: "1px solid #f1f5f9", background: "#f8fafc" },
+  studentName: { fontSize: "16px", fontWeight: "600", color: "var(--text-main)", margin: "0 0 4px 0" },
+  parentName: { fontSize: "13px", color: "var(--text-td)", margin: "2px 0" },
+  contact: { fontSize: "12px", color: "var(--text-muted)", margin: "2px 0" },
+  cardStats: { display: "flex", padding: "16px 20px", gap: "20px", borderBottom: "1px solid var(--border-light)", background: "var(--bg-layout)" },
   statItem: { flex: 1, textAlign: "center" },
   statValue: { fontSize: "16px", fontWeight: "700", color: "#6080E8" },
-  statLabel: { fontSize: "11px", color: "#64748b", marginTop: "4px", textTransform: "uppercase", letterSpacing: "0.02em" },
+  statLabel: { fontSize: "11px", color: "var(--text-muted)", marginTop: "4px", textTransform: "uppercase", letterSpacing: "0.02em" },
   cardActions: { display: "flex", gap: "10px", padding: "16px 20px" },
-  viewReceiptsBtn: { flex: 1, padding: "10px 8px", background: "#fff", color: "#475569", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "600", boxSizing: "border-box" },
-  createReceiptBtn: { flex: 1, padding: "10px 8px", background: "#6080E8", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "600", boxSizing: "border-box", textAlign: "center" },
-  emptyState: { textAlign: "center", padding: "60px 20px", background: "#fff", borderRadius: "12px", border: "1px solid #e2e8f0" },
-  emptyHint: { fontSize: "13px", color: "#94a3b8", marginTop: "8px" },
-  loading: { textAlign: "center", padding: "50px", fontSize: "16px", color: "#64748b" },
-  modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(4px)", zIndex: 999 },
-  modal: { position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", maxWidth: "700px", background: "#fff", borderRadius: "16px", zIndex: 1000, display: "flex", flexDirection: "column", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)", boxSizing: "border-box", maxHeight: "85vh" },
-  modalHeader: { padding: "20px 20px 14px 20px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "flex-start" },
-  modalTitle: { fontSize: "18px", fontWeight: "700", color: "#1e293b", margin: 0 },
-  modalSubtitle: { fontSize: "13px", color: "#64748b", margin: "4px 0 0 0" },
-  modalClose: { background: "none", border: "none", fontSize: "28px", color: "#94a3b8", cursor: "pointer", lineHeight: "1" },
+  viewReceiptsBtn: { flex: 1, padding: "10px 8px", background: "transparent", color: "var(--text-main)", border: "1px solid var(--border-main)", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "600", boxSizing: "border-box", whiteSpace: "nowrap" },
+  createReceiptBtn: { flex: 1, padding: "10px 8px", background: "#6080E8", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "600", boxSizing: "border-box", textAlign: "center", whiteSpace: "nowrap" },
+  emptyState: { textAlign: "center", padding: "60px 20px", background: "var(--bg-card)", borderRadius: "12px", border: "1px solid var(--border-main)" },
+  emptyHint: { fontSize: "13px", color: "var(--text-muted)", marginTop: "8px" },
+  loading: { textAlign: "center", padding: "50px", fontSize: "16px", color: "var(--text-muted)" },
+  modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0, 0, 0, 0.65)", backdropFilter: "blur(4px)", zIndex: 999 },
+  modal: { position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", maxWidth: "700px", background: "var(--bg-card)", border: "1px solid var(--border-main)", borderRadius: "16px", zIndex: 1000, display: "flex", flexDirection: "column", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)", boxSizing: "border-box", maxHeight: "85vh" },
+  modalHeader: { padding: "20px 20px 14px 20px", borderBottom: "1px solid var(--border-main)", display: "flex", justifyContent: "space-between", alignItems: "flex-start" },
+  modalTitle: { fontSize: "18px", fontWeight: "700", color: "var(--text-main)", margin: 0 },
+  modalSubtitle: { fontSize: "13px", color: "var(--text-muted)", margin: "4px 0 0 0" },
+  modalClose: { background: "none", border: "none", fontSize: "28px", color: "var(--text-muted)", cursor: "pointer", lineHeight: "1" },
   modalContent: { flex: 1, overflowY: "auto", padding: "0 20px 20px 20px" },
   
-  modalSearchArea: { padding: "12px 20px", display: "flex", gap: "10px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0", alignItems: "center" },
-  modalSearchField: { flex: 1, padding: "8px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13.5px", outline: "none" },
-  modalClearBtn: { background: "#fee2e2", color: "#dc2626", border: "none", padding: "8px 14px", borderRadius: "6px", fontSize: "12px", fontWeight: "700", cursor: "pointer" },
+  modalSearchArea: { padding: "12px 20px", display: "flex", gap: "10px", background: "var(--bg-layout)", borderBottom: "1px solid var(--border-main)", alignItems: "center" },
+  modalSearchField: { flex: 1, padding: "8px 12px", border: "1px solid var(--border-main)", background: "var(--bg-surface)", color: "var(--text-main)", borderRadius: "6px", fontSize: "13.5px", outline: "none" },
+  modalClearBtn: { background: "rgba(239, 68, 68, 0.15)", color: "#ef4444", border: "none", padding: "8px 14px", borderRadius: "6px", fontSize: "12px", fontWeight: "700", cursor: "pointer" },
 
   receiptsList: { display: "flex", flexDirection: "column", gap: "16px", marginTop: "16px" },
-  receiptCard: { border: "1px solid #e2e8f0", borderRadius: "10px", padding: "16px", background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.01)" },
-  receiptHeader: { display: "flex", justifyContent: "space-between" },
+  innerReceiptCard: { border: "1px solid var(--border-main)", borderRadius: "10px", padding: "16px", background: "var(--bg-surface)", boxShadow: "0 1px 2px var(--shadow-light)" },
+  innerReceiptHeader: { display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--border-light)", paddingBottom: "10px", marginBottom: "10px" },
   receiptNo: { fontSize: "14px", fontWeight: "700", color: "#6080E8", fontFamily: "monospace" },
-  receiptDate: { fontSize: "12px", color: "#64748b", marginTop: "2px" },
-  receiptAmount: { fontSize: "18px", fontWeight: "700", color: "#0f172a" },
+  receiptDate: { fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" },
+  receiptAmount: { fontSize: "18px", fontWeight: "700", color: "var(--text-main)" },
   receiptItems: { display: "flex", justifyContent: "space-between" },
   itemsPreview: { display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" },
-  itemTag: { background: "#f1f5f9", padding: "4px 8px", borderRadius: "6px", fontSize: "11px", color: "#475569", fontWeight: "500" },
-  moreTag: { background: "#e2e8f0", padding: "4px 8px", borderRadius: "6px", fontSize: "11px", color: "#64748b", fontWeight: "500" },
-  receiptActions: { display: "flex", gap: "8px", alignItems: "center" },
-  viewReceiptDetailsBtn: { padding: "6px 12px", background: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontSize: "12px", fontWeight: "600", boxSizing: "border-box" },
-  printReceiptBtn: { padding: "6px 12px", background: "#10b981", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "12px", fontWeight: "600", boxSizing: "border-box" },
-  noReceipts: { textAlign: "center", padding: "40px 20px", color: "#64748b" },
+  itemTag: { background: "var(--bg-layout)", padding: "4px 8px", borderRadius: "6px", fontSize: "11px", color: "var(--text-td)", fontWeight: "500", border: "1px solid var(--border-main)" },
+  moreTag: { background: "var(--border-main)", padding: "4px 8px", borderRadius: "6px", fontSize: "11px", color: "var(--text-muted)", fontWeight: "500" },
+  receiptActions: { display: "flex", gap: "8px", alignItems: "center", flexDirection: "row", flexWrap: "nowrap" },
+  viewReceiptDetailsBtn: { padding: "6px 12px", background: "transparent", color: "var(--text-main)", border: "1px solid var(--border-main)", borderRadius: "6px", cursor: "pointer", fontSize: "12px", fontWeight: "600", boxSizing: "border-box", whiteSpace: "nowrap" },
+  printReceiptBtn: { padding: "6px 12px", background: "#10b981", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "12px", fontWeight: "600", boxSizing: "border-box", whiteSpace: "nowrap" },
+  noReceipts: { textAlign: "center", padding: "40px 20px", color: "var(--text-muted)" },
   createFirstBtn: { marginTop: "16px", padding: "10px 20px", background: "#6080E8", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px" },
 
-  drawerOverlay: { position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0, 0, 0, 0.4)", zIndex: 999 },
-  drawer: { position: "fixed", top: 0, right: 0, height: "100vh", backgroundColor: "#fff", boxShadow: "-4px 0 15px rgba(0,0,0,0.1)", zIndex: 1000, transition: "transform 0.3s ease-in-out", display: "flex", flexDirection: "column", boxSizing: "border-box" },
-  drawerHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px", borderBottom: "1px solid #e2e8f0" },
-  drawerTitle: { margin: 0, fontSize: "18px", fontWeight: "700", color: "#1e293b" },
-  closeButton: { background: "none", border: "none", fontSize: "24px", color: "#64748b", cursor: "pointer", lineHeight: "1" },
+  drawerOverlay: { position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0, 0, 0, 0.5)", zIndex: 999 },
+  drawer: { position: "fixed", top: 0, right: 0, height: "100vh", backgroundColor: "var(--bg-card)", boxShadow: "-4px 0 15px rgba(0,0,0,0.2)", zIndex: 1000, transition: "transform 0.3s ease-in-out", display: "flex", flexDirection: "column", boxSizing: "border-box" },
+  drawerHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px", borderBottom: "1px solid var(--border-main)" },
+  drawerTitle: { margin: 0, fontSize: "18px", fontWeight: "700", color: "var(--text-main)" },
+  closeButton: { background: "none", border: "none", fontSize: "24px", color: "var(--text-muted)", cursor: "pointer", lineHeight: "1" },
   drawerContent: { padding: "20px", overflowY: "auto", flexGrow: 1 }
 };

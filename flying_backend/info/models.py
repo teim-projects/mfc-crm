@@ -115,10 +115,41 @@ class Course(models.Model):
 
 
 class Student(models.Model):
+    GENDER_CHOICES = (
+        ("Male", "Male"),
+        ("Female", "Female"),
+        ("Other", "Other"),
+    )
+
 
     student_name = models.CharField(
         max_length=255
     )
+
+    date_of_birth = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    gender = models.CharField(
+        max_length=10,
+        choices=GENDER_CHOICES,
+        null=True,
+        blank=True
+    )
+
+    standard = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True
+    )
+
+    section = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True
+    )
+
 
     # 🏫 LINK SCHOOL
     school = models.ForeignKey(

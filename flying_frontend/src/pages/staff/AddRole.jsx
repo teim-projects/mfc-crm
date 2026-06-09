@@ -14,7 +14,7 @@ export default function AddRole({ isOpen, onClose, onSuccess }) {
     try {
       await API.post("/auth/roles/create/", { name });
       alert("Role created successfully!");
-      onSuccess(); // Triggers any logic needed on success (like closing/refreshing)
+      onSuccess(); 
     } catch {
       alert("Error creating role");
     }
@@ -22,7 +22,6 @@ export default function AddRole({ isOpen, onClose, onSuccess }) {
 
   return (
     <div style={styles.overlay} onClick={onClose}>
-      {/* StopPropagation prevents the popup from closing when clicking inside the card */}
       <div style={styles.card} onClick={(e) => e.stopPropagation()}>
         <div style={styles.modalHeader}>
           <h2 style={styles.title}>Add New Role</h2>
@@ -59,24 +58,24 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(30, 30, 45, 0.4)", // Dim dark tint
-    backdropFilter: "blur(5px)", // Smooth background blur
-    WebkitBackdropFilter: "blur(5px)", // Safari support
+    backgroundColor: "rgba(0, 0, 0, 0.65)", // 🌟 Darkened backdrop overlay for crisp popup isolation
+    backdropFilter: "blur(5px)", 
+    WebkitBackdropFilter: "blur(5px)", 
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 2000, // Makes sure it stays on top of everything
+    zIndex: 2000, 
     padding: "20px",
     boxSizing: "border-box",
   },
   card: {
-    background: "#fff",
+    background: "var(--bg-card)", // 👈 Dynamic variable
     padding: "28px",
     borderRadius: "12px",
-    boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-    border: "1px solid #edf2f7",
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)", // 🌟 Deep depth shadow highlight
+    border: "1px solid var(--border-main)", // 👈 Dynamic highlighted border frame line
     width: "100%",
-    maxWidth: "450px", // Polished mobile-friendly modal width
+    maxWidth: "450px", 
     boxSizing: "border-box",
     animation: "fadeIn 0.2s ease-out",
   },
@@ -89,14 +88,14 @@ const styles = {
   title: {
     fontSize: "20px",
     fontWeight: "700",
-    color: "#1e293b",
+    color: "var(--text-main)", // 👈 Dynamic variable
     margin: 0,
   },
   closeButton: {
     background: "none",
     border: "none",
     fontSize: "24px",
-    color: "#94a3b8",
+    color: "var(--text-muted)", // 👈 Dynamic variable
     cursor: "pointer",
     padding: "4px",
     lineHeight: "1",
@@ -110,17 +109,18 @@ const styles = {
   label: {
     fontSize: "13px",
     fontWeight: "600",
-    color: "#475569",
+    color: "var(--text-muted)", // 👈 Dynamic variable
   },
   input: {
     padding: "10px 14px",
     borderRadius: "6px",
-    border: "1px solid #cbd5e1",
+    border: "1px solid var(--border-main)", // 👈 Dynamic variable
+    background: "var(--bg-surface)", // 👈 Dynamic variable (contrasts against card bg)
     fontSize: "14px",
     outline: "none",
     width: "100%",
     boxSizing: "border-box",
-    color: "#334155",
+    color: "var(--text-main)", // 👈 Dynamic variable
   },
   actionGroup: {
     display: "flex",
@@ -128,14 +128,15 @@ const styles = {
     justifyContent: "flex-end",
   },
   secondaryButton: {
-    background: "#fff",
-    color: "#475569",
-    border: "1px solid #cbd5e1",
+    background: "transparent",
+    color: "var(--text-main)", // 👈 Dynamic variable
+    border: "1px solid var(--border-main)", // 👈 Dynamic variable
     padding: "8px 16px",
     borderRadius: "6px",
     cursor: "pointer",
     fontWeight: "600",
     fontSize: "13px",
+    textAlign: "center",
   },
   primaryButton: {
     background: "#6080E8",
@@ -147,5 +148,6 @@ const styles = {
     fontWeight: "600",
     fontSize: "13px",
     boxShadow: "0 2px 4px rgba(96, 128, 232, 0.15)",
+    textAlign: "center",
   },
 };

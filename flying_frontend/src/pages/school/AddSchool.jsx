@@ -14,14 +14,23 @@ export default function AddSchool({ isOpen, id, onClose, onSuccess }) {
     coordinator_name: "",
     coordinator_number: "",
     landline_number: "",
-    tution_fees: "" // Added to ensure matching state variables are captured seamlessly
+    tution_fees: "" 
   });
+
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth <= 600 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 600);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (isOpen && id) {
       fetchSchool();
     } else if (!id) {
-      // Clear data when opening fresh to add a school
       setFormData({
         school_name: "",
         owner_name: "",
@@ -86,8 +95,11 @@ export default function AddSchool({ isOpen, id, onClose, onSuccess }) {
         </div>
 
         <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.formGrid}>
-            <div style={styles.inputContainer}>
+          <div style={{
+            ...styles.formGrid,
+            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr"
+          }}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>School Name *</label>
               <input
                 type="text"
@@ -100,7 +112,7 @@ export default function AddSchool({ isOpen, id, onClose, onSuccess }) {
               />
             </div>
 
-            <div style={styles.inputContainer}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Owner Name</label>
               <input
                 type="text"
@@ -112,7 +124,7 @@ export default function AddSchool({ isOpen, id, onClose, onSuccess }) {
               />
             </div>
 
-            <div style={styles.inputContainer}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Email Address</label>
               <input
                 type="email"
@@ -124,7 +136,7 @@ export default function AddSchool({ isOpen, id, onClose, onSuccess }) {
               />
             </div>
 
-            <div style={styles.inputContainer}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Primary Mobile Number</label>
               <input
                 type="text"
@@ -136,7 +148,7 @@ export default function AddSchool({ isOpen, id, onClose, onSuccess }) {
               />
             </div>
 
-            <div style={styles.inputContainer}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Contact Person</label>
               <input
                 type="text"
@@ -148,7 +160,7 @@ export default function AddSchool({ isOpen, id, onClose, onSuccess }) {
               />
             </div>
 
-            <div style={styles.inputContainer}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Contact Person Phone</label>
               <input
                 type="text"
@@ -160,7 +172,7 @@ export default function AddSchool({ isOpen, id, onClose, onSuccess }) {
               />
             </div>
 
-            <div style={styles.inputContainer}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Coordinator Name</label>
               <input
                 type="text"
@@ -172,7 +184,7 @@ export default function AddSchool({ isOpen, id, onClose, onSuccess }) {
               />
             </div>
 
-            <div style={styles.inputContainer}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Coordinator Number</label>
               <input
                 type="text"
@@ -184,7 +196,7 @@ export default function AddSchool({ isOpen, id, onClose, onSuccess }) {
               />
             </div>
 
-            <div style={styles.inputContainer}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Landline Number</label>
               <input
                 type="text"
@@ -196,7 +208,7 @@ export default function AddSchool({ isOpen, id, onClose, onSuccess }) {
               />
             </div>
 
-            <div style={styles.inputContainer}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Tuition Fees (₹)</label>
               <input
                 type="number"
@@ -208,7 +220,7 @@ export default function AddSchool({ isOpen, id, onClose, onSuccess }) {
               />
             </div>
 
-            <div style={{ ...styles.inputContainer, gridColumn: "span 2" }}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "span 2" }}>
               <label style={styles.fieldLabel}>Physical Address</label>
               <input
                 type="text"
@@ -250,7 +262,11 @@ export default function AddSchool({ isOpen, id, onClose, onSuccess }) {
             </div>
           </div>
 
-          <div style={styles.actionRow}>
+          <div style={{
+            ...styles.actionRow,
+            flexDirection: isMobile ? "column-reverse" : "row",
+            alignItems: isMobile ? "stretch" : "center"
+          }}>
             <button type="button" style={styles.cancelBtn} onClick={onClose}>
               Cancel
             </button>
@@ -264,6 +280,7 @@ export default function AddSchool({ isOpen, id, onClose, onSuccess }) {
   );
 }
 
+// 🌟 Styled directly to address contrast limits shown in image_954444.png
 const styles = {
   overlay: {
     position: "fixed",
@@ -271,9 +288,9 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(15, 23, 42, 0.4)",
-    backdropFilter: "blur(5px)",
-    WebkitBackdropFilter: "blur(5px)",
+    backgroundColor: "rgba(0, 0, 0, 0.65)", // Made backdrop darker so popup card detaches cleanly
+    backdropFilter: "blur(6px)",
+    WebkitBackdropFilter: "blur(6px)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -282,10 +299,11 @@ const styles = {
     boxSizing: "border-box",
   },
   modalCard: {
-    background: "#fff",
+    background: "var(--bg-card)",
+    border: "1px solid var(--border-main)", // Added outer frame boundary definition line
     padding: "30px",
     borderRadius: "14px",
-    boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)", // Enriched box shadow
     width: "100%",
     maxWidth: "680px",
     maxHeight: "90vh",
@@ -296,7 +314,7 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    borderBottom: "1px solid #f1f5f9",
+    borderBottom: "1px solid var(--border-main)",
     paddingBottom: "16px",
     marginBottom: "20px",
   },
@@ -308,19 +326,19 @@ const styles = {
   title: {
     fontSize: "20px",
     fontWeight: "700",
-    color: "#1e293b",
+    color: "var(--text-main)",
     margin: 0,
   },
   subtitle: {
     fontSize: "13px",
-    color: "#64748b",
+    color: "var(--text-muted)",
     margin: 0,
   },
   closeX: {
     background: "none",
     border: "none",
     fontSize: "24px",
-    color: "#94a3b8",
+    color: "var(--text-muted)",
     cursor: "pointer",
     padding: "0 4px",
     lineHeight: "1",
@@ -332,41 +350,40 @@ const styles = {
   },
   formGrid: {
     display: "grid",
-    gridTemplateColumns: window.innerWidth <= 600 ? "1fr" : "1fr 1fr",
     gap: "16px",
   },
   inputContainer: {
     display: "flex",
     flexDirection: "column",
     gap: "6px",
-    gridColumn: window.innerWidth <= 600 ? "span 2" : "initial",
   },
   fieldLabel: {
     fontSize: "12px",
     fontWeight: "600",
-    color: "#475569",
+    color: "var(--text-muted)",
   },
   input: {
     padding: "10px 14px",
     borderRadius: "6px",
-    border: "1px solid #cbd5e1",
+    border: "1px solid var(--border-main)", 
+    background: "var(--bg-surface)", // Shifted input backgrounds to contrast against card block backgrounds
     fontSize: "14px",
     outline: "none",
-    color: "#334155",
+    color: "var(--text-main)", 
     boxSizing: "border-box",
     width: "100%",
   },
   billingSection: {
-    background: "#f8fafc",
+    background: "var(--bg-surface)", 
     padding: "16px",
     borderRadius: "8px",
-    border: "1px solid #e2e8f0",
+    border: "1px solid var(--border-main)",
   },
   billingTitle: {
     display: "block",
     fontSize: "12px",
     fontWeight: "700",
-    color: "#475569",
+    color: "var(--text-muted)",
     textTransform: "uppercase",
     letterSpacing: "0.05em",
     marginBottom: "12px",
@@ -381,7 +398,7 @@ const styles = {
     alignItems: "center",
     gap: "8px",
     fontSize: "14px",
-    color: "#334155",
+    color: "var(--text-td)", 
     cursor: "pointer",
     fontWeight: "500",
   },
@@ -393,29 +410,31 @@ const styles = {
     display: "flex",
     gap: "12px",
     justifyContent: "flex-end",
-    borderTop: "1px solid #f1f5f9",
+    borderTop: "1px solid var(--border-main)",
     paddingTop: "16px",
     marginTop: "10px",
   },
   cancelBtn: {
-    background: "#fff",
-    color: "#475569",
-    border: "1px solid #cbd5e1",
-    padding: "8px 16px",
+    background: "transparent",
+    color: "var(--text-main)", 
+    border: "1px solid var(--border-main)", 
+    padding: "10px 16px",
     borderRadius: "6px",
     cursor: "pointer",
     fontWeight: "600",
     fontSize: "13px",
+    textAlign: "center"
   },
   submitBtn: {
     background: "#6080E8",
     color: "#fff",
     border: "none",
-    padding: "8px 16px",
+    padding: "10px 16px",
     borderRadius: "6px",
     cursor: "pointer",
     fontWeight: "600",
     fontSize: "13px",
     boxShadow: "0 2px 4px rgba(96, 128, 232, 0.15)",
+    textAlign: "center"
   },
 };

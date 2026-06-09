@@ -94,3 +94,31 @@ class ToggleStaffStatusView(APIView):
             return Response({
                 "error": "User not found"
             }, status=404)
+
+
+# UPDATE STAFF
+class UserUpdateView(
+    generics.UpdateAPIView
+):
+
+    queryset = User.objects.all()
+
+    serializer_class = UserSerializer
+
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+
+# DELETE STAFF
+class UserDeleteView(
+    generics.DestroyAPIView
+):
+
+    queryset = User.objects.all()
+
+    serializer_class = UserSerializer
+
+    permission_classes = [
+        IsAuthenticated
+    ]

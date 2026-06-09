@@ -5,6 +5,7 @@ import Sidebar from "../../components/Sidebar";
 import AddSchool from "./AddSchool";
 import Pagination from "../../components/Pagination";
 import AdvancedTableFilter from "../../components/AdvancedTableFilter";
+import RecordViewer from "../../components/RecordViewer";
 
 export default function Schools() {
   const [schools, setSchools] = useState([]);
@@ -14,9 +15,10 @@ export default function Schools() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [targetSchoolId, setTargetSchoolId] = useState(null);
-  const [isFilterOpen, setIsFilterOpen] = useState(false); // Controls sliding filter drawer
+  const [isFilterOpen, setIsFilterOpen] = useState(false); 
+  const [viewOpen, setViewOpen] = useState(false);
+  const [selectedSchool, setSelectedSchool] = useState(null);
   
-  // Real-time responsive layout width observer
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== "undefined" ? window.innerWidth : 1200
   );
@@ -58,9 +60,7 @@ export default function Schools() {
   };
 
   const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this school?"
-    );
+    const confirmDelete = window.confirm("Are you sure you want to delete this school?");
     if (!confirmDelete) return;
 
     try {
@@ -72,9 +72,6 @@ export default function Schools() {
     }
   };
 
-  // =====================================
-  // PAGINATION
-  // =====================================
   const totalPages = Math.ceil(filteredSchools.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedSchools = filteredSchools.slice(startIndex, startIndex + itemsPerPage);
@@ -103,7 +100,6 @@ export default function Schools() {
             flexDirection: isMobile ? "column" : "row",
             width: isMobile ? "100%" : "auto"
           }}>
-            {/* FILTER TOGGLE BUTTON */}
             <button 
               style={{ ...styles.secondaryButton, width: isMobile ? "100%" : "auto" }} 
               onClick={() => setIsFilterOpen(true)}
@@ -136,7 +132,7 @@ export default function Schools() {
               <tbody>
                 {paginatedSchools.map((school) => (
                   <tr key={school.id} style={styles.tr}>
-                    <td style={{ ...styles.td, fontWeight: "600", color: "#1e293b" }}>
+                    <td style={{ ...styles.td, fontWeight: "600", color: "var(--text-main)" }}>
                       {school.school_name}
                     </td>
                     <td style={styles.td}>{school.owner_name || "—"}</td>
@@ -147,25 +143,31 @@ export default function Schools() {
                       </span>
                     </td>
                     <td style={styles.td}>
-                      <div style={{
-                        ...styles.actionButtonGroup,
-                        flexDirection: isMobile ? "column" : "row",
-                        gap: isMobile ? "8px" : "6px"
-                      }}>
+                      {/* 🌟 Fixed layout mapping below to stay strictly inline row */}
+                      <div style={styles.actionButtonGroup}>
                         <button
-                          style={{ ...styles.viewBtn, width: isMobile ? "100%" : "auto" }}
+                          style={styles.recordBtn}
+                          onClick={() => {
+                            setSelectedSchool(school);
+                            setViewOpen(true);
+                          }}
+                        >
+                          +
+                        </button>
+                        <button
+                          style={styles.viewBtn}
                           onClick={() => navigate(`/schools/${school.id}/students`)}
                         >
                           View Students
                         </button>
                         <button
-                          style={{ ...styles.editBtn, width: isMobile ? "100%" : "auto" }}
+                          style={styles.editBtn}
                           onClick={() => handleOpenEditModal(school.id)}
                         >
                           Edit
                         </button>
                         <button
-                          style={{ ...styles.deleteBtn, width: isMobile ? "100%" : "auto" }}
+                          style={styles.deleteBtn}
                           onClick={() => handleDelete(school.id)}
                         >
                           Delete
@@ -190,7 +192,7 @@ export default function Schools() {
         />
       </div>
 
-      {/* FILTER SLIDING DRAWER & BACKDROP OVERLAY */}
+      {/* FILTER SLIDING DRAWER */}
       {isFilterOpen && (
         <div style={styles.drawerOverlay} onClick={() => setIsFilterOpen(false)} />
       )}
@@ -212,18 +214,36 @@ export default function Schools() {
         </div>
       </div>
 
-      {/* REUSABLE CONFIGURATION MODAL POPUP */}
       <AddSchool
         isOpen={modalOpen}
         id={targetSchoolId}
         onClose={() => setModalOpen(false)}
         onSuccess={handleModalSuccess}
       />
+
+      <RecordViewer
+        isOpen={viewOpen}
+        onClose={() => setViewOpen(false)}
+        record={selectedSchool}
+        title="School Details"
+      />
     </Sidebar>
   );
 }
 
 const styles = {
+  recordBtn: {
+    background: "var(--bg-layout)",
+    color: "#6080E8",
+    border: "1px solid #6080E8",
+    padding: "6px 10px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "700",
+    fontSize: "14px",
+    boxSizing: "border-box",
+    whiteSpace: "nowrap",
+  },
   container: {
     width: "100%",
     boxSizing: "border-box",
@@ -255,13 +275,13 @@ const styles = {
   title: {
     fontSize: "22px",
     fontWeight: "700",
-    color: "#1e293b",
+    color: "var(--text-main)",
     margin: 0,
     lineHeight: "1.2",
   },
   subtitle: {
     fontSize: "13px",
-    color: "#64748b",
+    color: "var(--text-muted)",
     margin: 0,
     paddingLeft: "14px",
   },
@@ -285,9 +305,9 @@ const styles = {
     boxSizing: "border-box",
   },
   secondaryButton: {
-    background: "#fff",
-    color: "#475569",
-    border: "1px solid #cbd5e1",
+    background: "var(--bg-card)",
+    color: "var(--text-main)",
+    border: "1px solid var(--border-main)",
     padding: "10px 16px",
     borderRadius: "6px",
     cursor: "pointer",
@@ -299,10 +319,10 @@ const styles = {
   },
   tableWrapper: {
     width: "100%",
-    background: "#fff",
+    background: "var(--bg-card)",
     borderRadius: "12px",
-    border: "1px solid #e2e8f0",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+    border: "1px solid var(--border-main)",
+    boxShadow: "0 1px 3px var(--shadow-light)",
     overflowX: "auto",
     WebkitOverflowScrolling: "touch",
     marginBottom: "20px"
@@ -313,31 +333,31 @@ const styles = {
     minWidth: "800px",
   },
   th: {
-    background: "#f8fafc",
+    background: "var(--bg-table-th)",
     padding: "14px 20px",
     textAlign: "left",
     fontSize: "11px",
     fontWeight: "600",
-    color: "#64748b",
+    color: "var(--text-muted)",
     textTransform: "uppercase",
     letterSpacing: "0.05em",
-    borderBottom: "1px solid #e2e8f0",
+    borderBottom: "1px solid var(--border-main)",
     whiteSpace: "nowrap",
   },
   tr: {
-    borderBottom: "1px solid #f1f5f9",
+    borderBottom: "1px solid var(--border-light)",
     transition: "background-color 0.2s ease",
   },
   td: {
     padding: "14px 20px",
     fontSize: "14px",
-    color: "#334155",
+    color: "var(--text-td)",
     whiteSpace: "nowrap",
     verticalAlign: "middle",
   },
   feeBadge: {
-    background: "#f0fdf4",
-    color: "#166534",
+    background: "rgba(22, 101, 52, 0.1)",
+    color: "#22c55e",
     padding: "4px 8px",
     borderRadius: "6px",
     fontSize: "13px",
@@ -348,20 +368,24 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    flexDirection: "row", // 👈 Kept row on all devices
+    gap: "6px", // 👈 Constant row gaps instead of changing with break targets
+    flexWrap: "nowrap" // 👈 Forces buttons to never line-break
   },
   viewBtn: {
-    background: "#f1f5f9",
-    color: "#475569",
-    border: "1px solid #cbd5e1",
+    background: "var(--bg-layout)",
+    color: "var(--text-main)",
+    border: "1px solid var(--border-main)",
     padding: "6px 12px",
     borderRadius: "6px",
     cursor: "pointer",
     fontWeight: "600",
     fontSize: "12px",
     boxSizing: "border-box",
+    whiteSpace: "nowrap", // Prevents multi-line splitting
   },
   editBtn: {
-    background: "#fff",
+    background: "transparent",
     color: "#6080E8",
     border: "1px solid #6080E8",
     padding: "6px 12px",
@@ -370,6 +394,7 @@ const styles = {
     fontWeight: "600",
     fontSize: "12px",
     boxSizing: "border-box",
+    whiteSpace: "nowrap",
   },
   deleteBtn: {
     background: "#ef4444",
@@ -381,11 +406,12 @@ const styles = {
     fontWeight: "600",
     fontSize: "12px",
     boxSizing: "border-box",
+    whiteSpace: "nowrap",
   },
   emptyState: {
     padding: "60px 20px",
     textAlign: "center",
-    color: "#64748b",
+    color: "var(--text-muted)",
   },
   drawerOverlay: {
     position: "fixed",
@@ -393,7 +419,7 @@ const styles = {
     left: 0,
     width: "100vw",
     height: "100vh",
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     zIndex: 999,
   },
   drawer: {
@@ -401,8 +427,8 @@ const styles = {
     top: 0,
     right: 0,
     height: "100vh",
-    backgroundColor: "#fff",
-    boxShadow: "-4px 0 15px rgba(0,0,0,0.1)",
+    backgroundColor: "var(--bg-card)",
+    boxShadow: "-4px 0 15px rgba(0,0,0,0.2)",
     zIndex: 1000,
     transition: "transform 0.3s ease-in-out",
     display: "flex",
@@ -414,19 +440,19 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
     padding: "20px",
-    borderBottom: "1px solid #e2e8f0",
+    borderBottom: "1px solid var(--border-main)",
   },
   drawerTitle: {
     margin: 0,
     fontSize: "18px",
     fontWeight: "700",
-    color: "#1e293b",
+    color: "var(--text-main)",
   },
   closeButton: {
     background: "none",
     border: "none",
     fontSize: "24px",
-    color: "#64748b",
+    color: "var(--text-muted)",
     cursor: "pointer",
     lineHeight: "1",
   },

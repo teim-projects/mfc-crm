@@ -15,6 +15,7 @@ import AddStudent from "./pages/students/AddStudent";
 import AllStudents from "./pages/students/AllStudents";
 import Products from "./pages/product/Products";
 import AddProduct from "./pages/product/AddProduct";
+import { ThemeProvider } from "./context/ThemeContext";
 
 
 import AddVendor from "./pages/inventory/AddVendor";
@@ -31,6 +32,7 @@ import Promotion from "./pages/students/Promotion";
 function App() {
   return (
     <BrowserRouter>
+    <ThemeProvider>
     <AuthWatcher /> 
       <Routes>
         <Route path="/" element={<Login />} />
@@ -89,6 +91,7 @@ function App() {
 
         
       </Routes>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

@@ -229,31 +229,31 @@ const styles = {
   sectionLabel: {
     fontSize: "11px",
     fontWeight: "700",
-    color: "#94a3b8",
+    color: "var(--text-muted)", // 👈 Dynamic Variable
     letterSpacing: "0.08em",
     marginBottom: "4px",
   },
   filterCard: {
-    background: "#f8fafc",
-    border: "1px solid #e2e8f0",
+    background: "var(--bg-surface)", // 👈 Dynamic Variable
+    border: "1px solid var(--border-main)", // 👈 Dynamic Variable
     borderRadius: "10px",
     padding: "14px",
     display: "flex",
     flexDirection: "column",
     gap: "12px",
-    boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+    boxShadow: "0 1px 2px var(--shadow-light)",
   },
   cardHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    borderBottom: "1px dashed #e2e8f0",
+    borderBottom: "1px dashed var(--border-main)", // 👈 Dynamic Variable
     paddingBottom: "8px",
   },
   cardIndex: {
     fontSize: "12px",
     fontWeight: "600",
-    color: "#64748b",
+    color: "var(--text-muted)", // 👈 Dynamic Variable
   },
   removeLink: {
     background: "none",
@@ -272,14 +272,14 @@ const styles = {
   fieldLabel: {
     fontSize: "11px",
     fontWeight: "600",
-    color: "#64748b",
+    color: "var(--text-muted)", // 👈 Dynamic Variable
   },
   selectInput: {
     padding: "10px 12px",
-    border: "1px solid #cbd5e1",
+    border: "1px solid var(--border-main)", // 👈 Dynamic Variable
     borderRadius: "8px",
-    background: "#fff",
-    color: "#334155",
+    background: "var(--bg-layout)", // 👈 Dynamic Variable
+    color: "var(--text-main)", // 👈 Dynamic Variable
     fontSize: "13px",
     fontWeight: "500",
     outline: "none",
@@ -290,10 +290,10 @@ const styles = {
   },
   textField: {
     padding: "10px 12px",
-    border: "1px solid #cbd5e1",
+    border: "1px solid var(--border-main)", // 👈 Dynamic Variable
     borderRadius: "8px",
-    background: "#fff",
-    color: "#334155",
+    background: "var(--bg-layout)", // 👈 Dynamic Variable
+    color: "var(--text-main)", // 👈 Dynamic Variable
     fontSize: "13px",
     outline: "none",
     width: "100%",
@@ -301,7 +301,7 @@ const styles = {
     transition: "border-color 0.2s",
   },
   addRuleBtn: {
-    background: "#f0f4ff",
+    background: "transparent",
     color: "#6080E8",
     border: "1px dashed #6080E8",
     padding: "10px 14px",
@@ -315,13 +315,13 @@ const styles = {
   },
   divider: {
     border: "none",
-    borderTop: "1px solid #e2e8f0",
+    borderTop: "1px solid var(--border-main)", // 👈 Dynamic Variable
     margin: "8px 0",
   },
   resetBtn: {
-    background: "#fff",
-    color: "#64748b",
-    border: "1px solid #cbd5e1",
+    background: "transparent",
+    color: "var(--text-main)", // 👈 Dynamic Variable
+    border: "1px solid var(--border-main)", // 👈 Dynamic Variable
     padding: "10px 16px",
     borderRadius: "8px",
     cursor: "pointer",

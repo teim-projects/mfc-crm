@@ -2,16 +2,25 @@ import { useEffect, useState } from "react";
 import API from "../../api";
 
 export default function AddVendor({ isOpen, id, onClose, onSuccess }) {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth <= 600 : false
+  );
   const [formData, setFormData] = useState({
     vendor_name: "",
     email: "",
     phone: "",
-    state: "",
+    operating_state: "",
     gst_number: "",
     category: "",
-    office_poc: "",
+    contact_person: "",
     address: "",
   });
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 600);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (isOpen && id) {
@@ -21,10 +30,10 @@ export default function AddVendor({ isOpen, id, onClose, onSuccess }) {
         vendor_name: "",
         email: "",
         phone: "",
-        state: "",
+        operating_state: "",
         gst_number: "",
         category: "",
-        office_poc: "",
+        contact_person: "",
         address: "",
       });
     }
@@ -37,10 +46,10 @@ export default function AddVendor({ isOpen, id, onClose, onSuccess }) {
         vendor_name: res.data.vendor_name || "",
         email: res.data.email || "",
         phone: res.data.phone || "",
-        state: res.data.state || "",
+        operating_state: res.data.operating_state || "",
         gst_number: res.data.gst_number || "",
         category: res.data.category || "",
-        office_poc: res.data.office_poc || "",
+        contact_person: res.data.contact_person || "",
         address: res.data.address || "",
       });
     } catch (err) {
@@ -86,8 +95,11 @@ export default function AddVendor({ isOpen, id, onClose, onSuccess }) {
         </div>
 
         <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.formGrid}>
-            <div style={styles.inputContainer}>
+          <div style={{
+            ...styles.formGrid,
+            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr"
+          }}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Vendor Agency Name *</label>
               <input
                 type="text"
@@ -100,7 +112,7 @@ export default function AddVendor({ isOpen, id, onClose, onSuccess }) {
               />
             </div>
 
-            <div style={styles.inputContainer}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Point of Contact Email</label>
               <input
                 type="email"
@@ -112,7 +124,7 @@ export default function AddVendor({ isOpen, id, onClose, onSuccess }) {
               />
             </div>
 
-            <div style={styles.inputContainer}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Mobile / Connection Phone *</label>
               <input
                 type="text"
@@ -125,19 +137,19 @@ export default function AddVendor({ isOpen, id, onClose, onSuccess }) {
               />
             </div>
 
-            <div style={styles.inputContainer}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Operating State Region</label>
               <input
                 type="text"
-                name="state"
+                name="operating_state"
                 placeholder="State Province"
-                value={formData.state}
+                value={formData.operating_state}
                 onChange={handleChange}
                 style={styles.input}
               />
             </div>
 
-            <div style={styles.inputContainer}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>GST Tax Reference Code</label>
               <input
                 type="text"
@@ -149,7 +161,7 @@ export default function AddVendor({ isOpen, id, onClose, onSuccess }) {
               />
             </div>
 
-            <div style={styles.inputContainer}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Product Distribution Category</label>
               <input
                 type="text"
@@ -161,19 +173,19 @@ export default function AddVendor({ isOpen, id, onClose, onSuccess }) {
               />
             </div>
 
-            <div style={{ ...styles.inputContainer, gridColumn: "span 2" }}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "span 2" }}>
               <label style={styles.fieldLabel}>Office POC Lead Manager</label>
               <input
                 type="text"
-                name="office_poc"
+                name="contact_person"
                 placeholder="Full Name of direct account manager handler"
-                value={formData.office_poc}
+                value={formData.contact_person}
                 onChange={handleChange}
                 style={styles.input}
               />
             </div>
 
-            <div style={{ ...styles.inputContainer, gridColumn: "span 2" }}>
+            <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "span 2" }}>
               <label style={styles.fieldLabel}>Warehouse / Corporate Address</label>
               <textarea
                 name="address"
@@ -185,7 +197,11 @@ export default function AddVendor({ isOpen, id, onClose, onSuccess }) {
             </div>
           </div>
 
-          <div style={styles.actionRow}>
+          <div style={{
+            ...styles.actionRow,
+            flexDirection: isMobile ? "column-reverse" : "row",
+            alignItems: isMobile ? "stretch" : "center"
+          }}>
             <button type="button" style={styles.cancelBtn} onClick={onClose}>
               Cancel
             </button>
@@ -206,21 +222,22 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(15, 23, 42, 0.4)",
-    backdropFilter: "blur(5px)",
-    WebkitBackdropFilter: "blur(5px)",
+    backgroundColor: "rgba(0, 0, 0, 0.65)", // Darkened backdrop mask context definition
+    backdropFilter: "blur(5px)", 
+    WebkitBackdropFilter: "blur(5px)", 
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 2000,
+    zIndex: 2000, 
     padding: "20px",
     boxSizing: "border-box",
   },
   modalCard: {
-    background: "#fff",
+    background: "var(--bg-card)", // 👈 Variable
+    border: "1px solid var(--border-main)", // 🌟 Highlighted frame boundary definition wireframe
     padding: "30px",
     borderRadius: "14px",
-    boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)", // Deep depth drop shadow mapping
     width: "100%",
     maxWidth: "620px",
     maxHeight: "90vh",
@@ -231,7 +248,7 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    borderBottom: "1px solid #f1f5f9",
+    borderBottom: "1px solid var(--border-main)", // 👈 Variable
     paddingBottom: "16px",
     marginBottom: "20px",
   },
@@ -243,19 +260,19 @@ const styles = {
   title: {
     fontSize: "20px",
     fontWeight: "700",
-    color: "#1e293b",
+    color: "var(--text-main)", // 👈 Variable
     margin: 0,
   },
   subtitle: {
     fontSize: "13px",
-    color: "#64748b",
+    color: "var(--text-muted)", // 👈 Variable
     margin: 0,
   },
   closeX: {
     background: "none",
     border: "none",
     fontSize: "24px",
-    color: "#94a3b8",
+    color: "var(--text-muted)", // 👈 Variable
     cursor: "pointer",
     padding: "0 4px",
     lineHeight: "1",
@@ -267,68 +284,71 @@ const styles = {
   },
   formGrid: {
     display: "grid",
-    gridTemplateColumns: window.innerWidth <= 600 ? "1fr" : "1fr 1fr",
     gap: "16px",
   },
   inputContainer: {
     display: "flex",
     flexDirection: "column",
     gap: "6px",
-    gridColumn: window.innerWidth <= 600 ? "span 2" : "initial",
   },
   fieldLabel: {
     fontSize: "12px",
     fontWeight: "600",
-    color: "#475569",
+    color: "var(--text-muted)", // 👈 Variable
   },
   input: {
     padding: "10px 14px",
     borderRadius: "6px",
-    border: "1px solid #cbd5e1",
+    border: "1px solid var(--border-main)", // 👈 Variable
+    background: "var(--bg-surface)", // 👈 Variable
     fontSize: "14px",
     outline: "none",
-    color: "#334155",
+    color: "var(--text-main)", // 👈 Variable
     boxSizing: "border-box",
     width: "100%",
   },
   textarea: {
     padding: "10px 14px",
     borderRadius: "6px",
-    border: "1px solid #cbd5e1",
+    border: "1px solid var(--border-main)", // 👈 Variable
+    background: "var(--bg-surface)", // 👈 Variable
     fontSize: "14px",
     outline: "none",
-    color: "#334155",
+    color: "var(--text-main)", // 👈 Variable
     boxSizing: "border-box",
     width: "100%",
     minHeight: "90px",
     resize: "vertical",
+    fontFamily: "inherit",
   },
   actionRow: {
     display: "flex",
     gap: "12px",
     justifyContent: "flex-end",
-    borderTop: "1px solid #f1f5f9",
+    borderTop: "1px solid var(--border-main)", // 👈 Variable
     paddingTop: "16px",
   },
   cancelBtn: {
-    background: "#fff",
-    color: "#475569",
-    border: "1px solid #cbd5e1",
-    padding: "8px 16px",
+    background: "transparent",
+    color: "var(--text-main)", // 👈 Variable
+    border: "1px solid var(--border-main)", // 👈 Variable
+    padding: "10px 16px",
     borderRadius: "6px",
     cursor: "pointer",
     fontWeight: "600",
     fontSize: "13px",
+    textAlign: "center",
   },
   submitBtn: {
     background: "#6080E8",
     color: "#fff",
     border: "none",
-    padding: "8px 16px",
+    padding: "10px 16px",
     borderRadius: "6px",
     cursor: "pointer",
     fontWeight: "600",
     fontSize: "13px",
     boxShadow: "0 2px 4px rgba(96, 128, 232, 0.15)",
+    textAlign: "center",
   },
 };

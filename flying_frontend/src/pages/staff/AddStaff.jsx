@@ -1,13 +1,29 @@
 import { useEffect, useState } from "react";
 import API from "../../api";
 
-export default function AddStaff({ isOpen, onClose, onSuccess }) {
+export default function AddStaff({ isOpen, id, onClose, onSuccess }) {
   const [roles, setRoles] = useState([]);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth <= 640 : false
+  );
   const [form, setForm] = useState({
     username: "",
     password: "",
-    role: ""
+    role: "",
+    address: "",
+    mobile_number: "",
+    spouse_number: "",
+    email_id: "",
+    joining_date: "",
+    salary: ""
   });
+
+  // Track viewport resizing for dynamic layout adjustment
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 640);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -17,197 +33,324 @@ export default function AddStaff({ isOpen, onClose, onSuccess }) {
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen && id) {
+      fetchStaff();
+    } else if (isOpen && !id) {
+      setForm({
+        username: "",
+        password: "",
+        role: "",
+        address: "",
+        mobile_number: "",
+        spouse_number: "",
+        email_id: "",
+        joining_date: "",
+        salary: "",
+      });
+    }
+  }, [id, isOpen]);
 
-  const handleSubmit = async () => {
-    if (!form.username.trim() || !form.password.trim() || !form.role) {
-      alert("Please fill out all required fields.");
+  const fetchStaff = async () => {
+    try {
+      const res = await API.get(`/auth/users/${id}/`);
+      setForm({
+        username: res.data.username || "",
+        password: "",
+        role: res.data.role || "",
+        address: res.data.address || "",
+        mobile_number: res.data.mobile_number || "",
+        spouse_number: res.data.spouse_number || "",
+        email_id: res.data.email_id || "",
+        joining_date: res.data.joining_date || "",
+        salary: res.data.salary || "",
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault(); 
+
+    if (!form.username.trim() || !form.role) {
+      alert("Username and Role are required.");
       return;
     }
 
     try {
-      await API.post("/auth/users/create/", form);
-      alert("Staff created successfully!");
-      setForm({ username: "", password: "", role: "" }); // Reset on successful creation
+      const payload = { ...form };
+
+      if (id) {
+        if (!payload.password) {
+          delete payload.password;
+        }
+        await API.put(`/auth/users/update/${id}/`, payload);
+        alert("Staff Updated Successfully ✨");
+      } else {
+        if (!form.password.trim()) {
+          alert("Password is required.");
+          return;
+        }
+        await API.post("/auth/users/create/", form);
+        alert("Staff Created Successfully 🚀");
+      }
+
       onSuccess();
-    } catch {
-      alert("Error creating staff");
+      onClose();
+    } catch (err) {
+      console.error(err.response?.data);
+      alert("Something went wrong");
     }
   };
 
+  if (!isOpen) return null;
+
   return (
     <div style={styles.overlay} onClick={onClose}>
-      {/* Click propagation stopped to prevent modal closing when working inside the card container */}
-      <div style={styles.card} onClick={(e) => e.stopPropagation()}>
+      <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
         <div style={styles.modalHeader}>
-          <h2 style={styles.title}>Add New Staff</h2>
-          <button style={styles.closeButton} onClick={onClose}>
-            &times;
-          </button>
+          <div>
+            <h2 style={styles.modalTitle}>{id ? "Edit Staff Member" : "Add New Staff"}</h2>
+            <p style={styles.modalSubtitle}>Configure system access parameters, registry codes, and payroll details.</p>
+          </div>
+          <button style={styles.closeX} onClick={onClose}>&times;</button>
         </div>
 
-        <div style={styles.formContent}>
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Username</label>
-            <input
-              style={styles.input}
-              placeholder="Enter username"
-              value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })}
-            />
+        <form onSubmit={handleSubmit} style={styles.form}>
+          {/* MULTI-COLUMN RESPONSIVE CREDENTIALS CONTAINER */}
+          <div style={{
+            ...styles.formGrid,
+            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr"
+          }}>
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Username *</label>
+              <input
+                type="text"
+                style={styles.input}
+                placeholder="Enter unique profile handle"
+                value={form.username}
+                onChange={(e) => setForm({ ...form, username: e.target.value })}
+                required
+              />
+            </div>
+
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Assign System Role *</label>
+              <select
+                style={styles.select}
+                value={form.role}
+                onChange={(e) => setForm({ ...form, role: Number(e.target.value) })}
+                required
+              >
+                <option value="">Select an authorization tier</option>
+                {roles.map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {role.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>{id ? "Update Password (Optional)" : "Account Password *"}</label>
+              <input
+                type="password"
+                style={styles.input}
+                placeholder={id ? "Leave blank to preserve existing token" : "Create standard secure password"}
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                required={!id}
+              />
+            </div>
+
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Primary Contact Number</label>
+              <input
+                type="text"
+                style={styles.input}
+                placeholder="Mobile number"
+                value={form.mobile_number}
+                onChange={(e) => setForm({ ...form, mobile_number: e.target.value })}
+              />
+            </div>
+
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Secondary Emergency Contact</label>
+              <input
+                type="text"
+                style={styles.input}
+                placeholder="Spouse / guardian phone"
+                value={form.spouse_number}
+                onChange={(e) => setForm({ ...form, spouse_number: e.target.value })}
+              />
+            </div>
+
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Email Address</label>
+              <input
+                type="email"
+                style={styles.input}
+                placeholder="name@myflyingcolours.com"
+                value={form.email_id}
+                onChange={(e) => setForm({ ...form, email_id: e.target.value })}
+              />
+            </div>
+
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Gate Joining Date</label>
+              <input
+                type="date"
+                style={styles.input}
+                value={form.joining_date}
+                onChange={(e) => setForm({ ...form, joining_date: e.target.value })}
+              />
+            </div>
+
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Basic Base Salary (₹)</label>
+              <input
+                type="number"
+                style={styles.input}
+                placeholder="0.00"
+                value={form.salary}
+                onChange={(e) => setForm({ ...form, salary: e.target.value })}
+              />
+            </div>
+
+            <div style={{ ...styles.inputGroup, gridColumn: isMobile ? "initial" : "span 2" }}>
+              <label style={styles.label}>Residential Mailing Address</label>
+              <textarea
+                style={styles.textarea}
+                rows="2"
+                placeholder="Provide physical street location details..."
+                value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+              />
+            </div>
           </div>
 
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Password</label>
-            <input
-              style={styles.input}
-              type="password"
-              placeholder="Enter secure password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-            />
+          {/* ACTION BUTTON GROUP FOOTER */}
+          <div style={{
+            ...styles.footerActions,
+            flexDirection: isMobile ? "column-reverse" : "row",
+            alignItems: isMobile ? "stretch" : "center"
+          }}>
+            <button type="button" style={styles.cancelBtn} onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" style={styles.submitBtn}>
+              {id ? "Update Staff Member" : "Create Staff Profile"}
+            </button>
           </div>
-
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Assign Role</label>
-            <select
-              style={styles.select}
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-            >
-              <option value="">Select a Role</option>
-              {roles.map((role) => (
-                <option key={role.id} value={role.id}>
-                  {role.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div style={styles.actionGroup}>
-          <button style={styles.secondaryButton} onClick={onClose}>
-            Cancel
-          </button>
-          <button style={styles.primaryButton} onClick={handleSubmit}>
-            Create Staff Member
-          </button>
-        </div>
+        </form>
       </div>
     </div>
   );
 }
 
 const styles = {
-  overlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(30, 30, 45, 0.4)", // Perfectly balances transparency depth
-    backdropFilter: "blur(5px)", // Consistent frosted glass layout look
-    WebkitBackdropFilter: "blur(5px)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 2000,
-    padding: "20px",
-    boxSizing: "border-box",
+  overlay: { 
+    position: "fixed", 
+    top: 0, 
+    left: 0, 
+    right: 0, 
+    bottom: 0, 
+    backgroundColor: "rgba(0, 0, 0, 0.65)", // Match high contrast background backdrop mask shadow logic
+    backdropFilter: "blur(5px)", 
+    WebkitBackdropFilter: "blur(5px)", 
+    display: "flex", 
+    alignItems: "center", 
+    justifyContent: "center", 
+    zIndex: 2000, 
+    padding: "16px", 
+    boxSizing: "border-box" 
   },
-  card: {
-    background: "#fff",
-    padding: "28px",
-    borderRadius: "12px",
-    boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-    border: "1px solid #edf2f7",
-    width: "100%",
-    maxWidth: "480px",
-    boxSizing: "border-box",
+  modalCard: { 
+    background: "var(--bg-card)", 
+    border: "1px solid var(--border-main)", // Highlighting perimeter structure wireline definitions
+    padding: "26px", 
+    borderRadius: "16px", 
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)", 
+    width: "100%", 
+    maxWidth: "640px", 
+    maxHeight: "85vh", 
+    overflowY: "auto", 
+    boxSizing: "border-box" 
   },
-  modalHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "24px",
+  modalHeader: { 
+    display: "flex", 
+    justifyContent: "space-between", 
+    alignItems: "flex-start", 
+    borderBottom: "1px solid var(--border-main)", 
+    paddingBottom: "14px", 
+    marginBottom: "18px" 
   },
-  title: {
-    fontSize: "20px",
-    fontWeight: "700",
-    color: "#1e293b",
-    margin: 0,
+  modalTitle: { fontSize: "20px", fontWeight: "700", color: "var(--text-main)", margin: 0 },
+  modalSubtitle: { fontSize: "13px", color: "var(--text-muted)", margin: "4px 0 0 0", lineHeight: "1.4" },
+  closeX: { background: "none", border: "none", fontSize: "24px", color: "var(--text-muted)", cursor: "pointer", lineHeight: "1" },
+  form: { display: "flex", flexDirection: "column", gap: "20px" },
+  formGrid: { display: "grid", gap: "14px" },
+  inputGroup: { display: "flex", flexDirection: "column", gap: "6px" },
+  label: { fontSize: "12px", fontWeight: "600", color: "var(--text-muted)" },
+  input: { 
+    padding: "10px 12px", 
+    borderRadius: "6px", 
+    border: "1px solid var(--border-main)", 
+    background: "var(--bg-surface)",
+    fontSize: "14px", 
+    outline: "none", 
+    color: "var(--text-main)", 
+    width: "100%", 
+    boxSizing: "border-box" 
   },
-  closeButton: {
-    background: "none",
-    border: "none",
-    fontSize: "24px",
-    color: "#94a3b8",
-    cursor: "pointer",
-    padding: "4px",
-    lineHeight: "1",
+  select: { 
+    padding: "10px 12px", 
+    borderRadius: "6px", 
+    border: "1px solid var(--border-main)", 
+    background: "var(--bg-surface)",
+    fontSize: "14px", 
+    outline: "none", 
+    color: "var(--text-main)", 
+    width: "100%", 
+    boxSizing: "border-box", 
+    cursor: "pointer" 
   },
-  formContent: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "18px",
-    marginBottom: "24px",
+  textarea: { 
+    padding: "10px 12px", 
+    borderRadius: "6px", 
+    border: "1px solid var(--border-main)", 
+    background: "var(--bg-surface)",
+    fontSize: "14px", 
+    outline: "none", 
+    resize: "none", 
+    width: "100%", 
+    boxSizing: "border-box", 
+    color: "var(--text-main)", 
+    fontFamily: "inherit" 
   },
-  inputGroup: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px",
-  },
-  label: {
+  footerActions: { display: "flex", gap: "12px", justifyContent: "flex-end", borderTop: "1px solid var(--border-main)", paddingTop: "14px" },
+  cancelBtn: { 
+    background: "transparent", 
+    color: "var(--text-main)", 
+    border: "1px solid var(--border-main)", 
+    padding: "10px 16px", 
+    borderRadius: "6px", 
+    cursor: "pointer", 
+    fontWeight: "600", 
     fontSize: "13px",
-    fontWeight: "600",
-    color: "#475569",
+    textAlign: "center"
   },
-  input: {
-    padding: "10px 14px",
-    borderRadius: "6px",
-    border: "1px solid #cbd5e1",
-    fontSize: "14px",
-    outline: "none",
-    width: "100%",
-    boxSizing: "border-box",
-    color: "#334155",
-  },
-  select: {
-    padding: "10px 14px",
-    borderRadius: "6px",
-    border: "1px solid #cbd5e1",
-    fontSize: "14px",
-    outline: "none",
-    width: "100%",
-    boxSizing: "border-box",
-    color: "#334155",
-    background: "#fff",
-    cursor: "pointer",
-  },
-  actionGroup: {
-    display: "flex",
-    gap: "10px",
-    justifyContent: "flex-end",
-  },
-  secondaryButton: {
-    background: "#fff",
-    color: "#475569",
-    border: "1px solid #cbd5e1",
-    padding: "8px 16px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontWeight: "600",
-    fontSize: "13px",
-  },
-  primaryButton: {
-    background: "#6080E8",
-    color: "#fff",
-    border: "none",
-    padding: "8px 16px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontWeight: "600",
-    fontSize: "13px",
+  submitBtn: { 
+    background: "#6080E8", 
+    color: "#fff", 
+    border: "none", 
+    padding: "10px 16px", 
+    borderRadius: "6px", 
+    cursor: "pointer", 
+    fontWeight: "600", 
+    fontSize: "13px", 
     boxShadow: "0 2px 4px rgba(96, 128, 232, 0.15)",
-  },
+    textAlign: "center"
+  }
 };
