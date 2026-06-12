@@ -112,25 +112,59 @@ from info.models import Student
 
 # 📑 File: views.py (Update the view at the bottom)
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+
+from info.models import Student
+
+
 class StudentsBySchoolView(APIView):
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request, school_id):
-        # 🌟 FIX: Query the Student model directly by school_id 
-        # This calls ALL students registered to the school, not just ones with old receipts!
-        students = Student.objects.filter(school_id=school_id)
+
+        students = (
+            Student.objects
+            .select_related(
+                "course",
+                "course__course_type",
+                "course__level"
+            )
+            .filter(
+                school_id=school_id
+            )
+            .order_by("student_name")
+        )
 
         data = []
+
         for student in students:
+
             data.append({
                 "id": student.id,
                 "student_name": student.student_name,
                 "parent_name": student.parent_name,
                 "parent_contact": student.parent_contact,
-                # Safe fallback if course relationship isn't mapped yet
-                "course": student.course.id if student.course else None,
-                "course_name": student.course.course_type if student.course else "General",
-                "level": student.level,
+
+                "course": (
+                    student.course.id
+                    if student.course
+                    else None
+                ),
+
+                "course_name": (
+                    student.course.course_type.name
+                    if student.course
+                    else ""
+                ),
+
+                "level": (
+                    student.course.level.level_name
+                    if student.course
+                    else ""
+                ),
             })
 
         return Response(data)

@@ -16,9 +16,15 @@ from .models import (
 
 class ProductSerializer(serializers.ModelSerializer):
 
-    course_level = serializers.SerializerMethodField()
+    course_type_name = serializers.CharField(
+        source="course_type.name",
+        read_only=True
+    )
 
-    course_type_name = serializers.SerializerMethodField()
+    course_level_name = serializers.CharField(
+        source="course_level.level_name",
+        read_only=True
+    )
 
     class Meta:
 
@@ -26,37 +32,37 @@ class ProductSerializer(serializers.ModelSerializer):
 
         fields = "__all__"
 
-    def get_course_level(self, obj):
-
-        if obj.product_type == "book" and obj.course:
-
-            return obj.course.level
-
-        elif obj.product_type == "instrument":
-
-            return "All Levels"
-
-        elif obj.product_type == "bag":
-
-            return "Common"
-
-        return None
+    def to_representation(self, instance):
+    
+        data = super().to_representation(instance)
+    
+        if instance.product_type == "instrument":
+            data["course_level_display"] = "All Levels"
+    
+        elif instance.product_type == "bag":
+            data["course_level_display"] = "Common"
+    
+        else:
+            data["course_level_display"] = (
+                instance.course_level.level_name
+                if instance.course_level
+                else ""
+            )
+    
+        return data
 
     def get_course_type_name(self, obj):
-
-        if obj.product_type == "book" and obj.course:
-
-            return obj.course.course_type
-
-        elif obj.product_type == "instrument":
-
-            return obj.course_type
-
-        elif obj.product_type == "bag":
-
+    
+        if obj.product_type == "bag":
             return "Common"
+    
+        return (
+            obj.course_type.name
+            if obj.course_type
+            else ""
+        )
 
-        return None
+        
 
 
 # =====================================

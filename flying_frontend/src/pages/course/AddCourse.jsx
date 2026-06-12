@@ -13,6 +13,29 @@ export default function AddCourse({ isOpen, id, onClose, onSuccess }) {
     description: "",
   });
 
+  const [courseTypes, setCourseTypes] = useState([]);
+  const [levels, setLevels] = useState([]);
+
+  useEffect(() => {
+    API.get("/info/course-types/")
+      .then(res => setCourseTypes(res.data));
+  }, []);
+
+  const handleCourseTypeChange = async (id) => {
+    if (!id) {
+      setLevels([]);
+      setFormData({ ...formData, course_type: "", level: "" });
+      return;
+    }
+    const res = await API.get(`/info/course-levels/?course_type=${id}`);
+    setLevels(res.data);
+    setFormData({
+      ...formData,
+      course_type: id,
+      level: ""
+    });
+  };
+
   // Track viewport resizing for dynamic layout adjustment
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 600);
@@ -38,6 +61,11 @@ export default function AddCourse({ isOpen, id, onClose, onSuccess }) {
     try {
       const res = await API.get(`/info/courses/${id}/`);
       setFormData(res.data);
+      // Fetch matching levels for editing instance to prevent empty options
+      if (res.data.course_type) {
+        const levelsRes = await API.get(`/info/course-levels/?course_type=${res.data.course_type}`);
+        setLevels(levelsRes.data);
+      }
     } catch (err) {
       console.log(err);
     }
@@ -67,16 +95,6 @@ export default function AddCourse({ isOpen, id, onClose, onSuccess }) {
     }
   };
 
-  const getLevels = () => {
-    if (formData.course_type === "vedic_maths") {
-      return ["Level 1", "Level 2", "Level 3"];
-    }
-    if (formData.course_type === "abacus") {
-      return Array.from({ length: 12 }, (_, i) => `Level ${i + 1}`);
-    }
-    return [];
-  };
-
   if (!isOpen) return null;
 
   return (
@@ -98,32 +116,33 @@ export default function AddCourse({ isOpen, id, onClose, onSuccess }) {
             <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Course Program Type *</label>
               <select
-                name="course_type"
                 value={formData.course_type}
-                onChange={handleChange}
-                style={styles.select}
+                onChange={(e) => handleCourseTypeChange(e.target.value)}
+                style={styles.select} /* 🌟 Fixed: Applied dark mode style hook */
                 required
               >
                 <option value="">Select Course Type</option>
-                <option value="vedic_maths">Vedic Maths</option>
-                <option value="abacus">Abacus</option>
+                {courseTypes.map(item => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Academic Level *</label>
               <select
-                name="level"
                 value={formData.level}
+                name="level"
                 onChange={handleChange}
-                style={styles.select}
+                style={styles.select} /* 🌟 Fixed: Applied dark mode style hook */
                 required
-                disabled={!formData.course_type}
               >
                 <option value="">Select Level</option>
-                {getLevels().map((level, i) => (
-                  <option key={i} value={level}>
-                    {level}
+                {levels.map(level => (
+                  <option key={level.id} value={level.id}>
+                    {level.level_name}
                   </option>
                 ))}
               </select>
@@ -192,7 +211,7 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.65)", // Darkened overlay mask configuration
+    backgroundColor: "rgba(0, 0, 0, 0.65)", 
     backdropFilter: "blur(5px)",
     WebkitBackdropFilter: "blur(5px)",
     display: "flex",
@@ -203,11 +222,11 @@ const styles = {
     boxSizing: "border-box",
   },
   modalCard: {
-    background: "var(--bg-card)", // 👈 Variable
-    border: "1px solid var(--border-main)", // 🌟 Polished highlighted outer edge tracking frame 
+    background: "var(--bg-card)", 
+    border: "1px solid var(--border-main)", 
     padding: "30px",
     borderRadius: "14px",
-    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)", // Heightened shadow configuration logic
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)", 
     width: "100%",
     maxWidth: "560px",
     maxHeight: "90vh",
@@ -218,7 +237,7 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    borderBottom: "1px solid var(--border-main)", // 👈 Variable
+    borderBottom: "1px solid var(--border-main)", 
     paddingBottom: "16px",
     marginBottom: "20px",
   },
@@ -230,19 +249,19 @@ const styles = {
   title: {
     fontSize: "20px",
     fontWeight: "700",
-    color: "var(--text-main)", // 👈 Variable
+    color: "var(--text-main)", 
     margin: 0,
   },
   subtitle: {
     fontSize: "13px",
-    color: "var(--text-muted)", // 👈 Variable
+    color: "var(--text-muted)", 
     margin: 0,
   },
   closeX: {
     background: "none",
     border: "none",
     fontSize: "24px",
-    color: "var(--text-muted)", // 👈 Variable
+    color: "var(--text-muted)", 
     cursor: "pointer",
     padding: "0 4px",
     lineHeight: "1",
@@ -264,27 +283,27 @@ const styles = {
   fieldLabel: {
     fontSize: "12px",
     fontWeight: "600",
-    color: "var(--text-muted)", // 👈 Variable
+    color: "var(--text-muted)", 
   },
   input: {
     padding: "10px 14px",
     borderRadius: "6px",
-    border: "1px solid var(--border-main)", // 👈 Variable
-    background: "var(--bg-surface)", // 👈 Variable
+    border: "1px solid var(--border-main)", 
+    background: "var(--bg-surface)", 
     fontSize: "14px",
     outline: "none",
-    color: "var(--text-main)", // 👈 Variable
+    color: "var(--text-main)", 
     boxSizing: "border-box",
     width: "100%",
   },
   select: {
     padding: "10px 14px",
     borderRadius: "6px",
-    border: "1px solid var(--border-main)", // 👈 Variable
-    background: "var(--bg-surface)", // 👈 Variable
+    border: "1px solid var(--border-main)", 
+    background: "var(--bg-surface)", 
     fontSize: "14px",
     outline: "none",
-    color: "var(--text-main)", // 👈 Variable
+    color: "var(--text-main)", 
     boxSizing: "border-box",
     width: "100%",
     cursor: "pointer",
@@ -292,11 +311,11 @@ const styles = {
   textarea: {
     padding: "10px 14px",
     borderRadius: "6px",
-    border: "1px solid var(--border-main)", // 👈 Variable
-    background: "var(--bg-surface)", // 👈 Variable
+    border: "1px solid var(--border-main)", 
+    background: "var(--bg-surface)", 
     fontSize: "14px",
     outline: "none",
-    color: "var(--text-main)", // 👈 Variable
+    color: "var(--text-main)", 
     boxSizing: "border-box",
     width: "100%",
     minHeight: "90px",
@@ -307,13 +326,13 @@ const styles = {
     display: "flex",
     gap: "12px",
     justifyContent: "flex-end",
-    borderTop: "1px solid var(--border-main)", // 👈 Variable
+    borderTop: "1px solid var(--border-main)", 
     paddingTop: "16px",
   },
   cancelBtn: {
     background: "transparent",
-    color: "var(--text-main)", // 👈 Variable
-    border: "1px solid var(--border-main)", // 👈 Variable
+    color: "var(--text-main)", 
+    border: "1px solid var(--border-main)", 
     padding: "10px 16px",
     borderRadius: "6px",
     cursor: "pointer",

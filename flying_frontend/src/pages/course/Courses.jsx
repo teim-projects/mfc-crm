@@ -5,8 +5,10 @@ import AddCourse from "./AddCourse";
 import Pagination from "../../components/Pagination";
 import AdvancedTableFilter from "../../components/AdvancedTableFilter";
 import RecordViewer from "../../components/RecordViewer";
+import { useNavigate } from "react-router-dom";
 
 export default function Courses() {
+  const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [itemsPerPage, setItemsPerPage] = useState(8);
@@ -34,6 +36,7 @@ export default function Courses() {
   const fetchCourses = async () => {
     try {
       const res = await API.get("/info/courses/");
+console.log(res.data);
       setCourses(res.data);
       setFilteredCourses(res.data);
     } catch (err) {
@@ -106,12 +109,29 @@ export default function Courses() {
             width: isMobile ? "100%" : "auto"
           }}>
             {/* INLINE DRAWER TOGGLE BUTTON */}
+
+
             <button 
               style={{ ...styles.secondaryButton, width: isMobile ? "100%" : "auto" }} 
               onClick={() => setIsFilterOpen(true)}
             >
               🔍 Filter
             </button>
+
+
+            <button
+  style={styles.secondaryButton}
+  onClick={() => navigate("/course-types")}
+>
+  Course Types
+</button>
+
+<button
+  style={styles.secondaryButton}
+  onClick={() => navigate("/course-levels")}
+>
+  Course Levels
+</button>
             <button 
               style={{ ...styles.primaryButton, width: isMobile ? "100%" : "auto" }} 
               onClick={handleOpenAddModal}
@@ -138,19 +158,25 @@ export default function Courses() {
                 {paginatedCourses.map((course) => (
                   <tr key={course.id} style={styles.tr}>
                     <td style={styles.td}>
-                      <span
-                        style={{
-                          ...styles.typeTag,
-                          background: course.course_type === "vedic_maths" ? "rgba(96, 128, 232, 0.15)" : "rgba(217, 119, 6, 0.15)",
-                          color: course.course_type === "vedic_maths" ? "#7C94F2" : "#f59e0b",
-                        }}
-                      >
-                        {course.course_type === "vedic_maths" ? "Vedic Maths" : "Abacus"}
-                      </span>
-                    </td>
-                    <td style={{ ...styles.td, fontWeight: "600", color: "var(--text-main)" }}>
-                      {course.level}
-                    </td>
+  <span
+    style={{
+      ...styles.typeTag,
+      background: "rgba(96, 128, 232, 0.15)",
+      color: "#7C94F2",
+    }}
+  >
+    {course.course_type_name || "-"}
+  </span>
+</td>
+                    <td
+  style={{
+    ...styles.td,
+    fontWeight: "600",
+    color: "var(--text-main)"
+  }}
+>
+  {course.level_name || "-"}
+</td>
                     <td style={styles.td}>
                       <span style={styles.feeBadge}>
                         ₹ {Number(course.tuition_fees || 0).toLocaleString("en-IN")}

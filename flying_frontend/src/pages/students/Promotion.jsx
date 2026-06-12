@@ -5,7 +5,8 @@ import API from "../../api";
 export default function Promotion() {
   const [schools, setSchools] = useState([]);
   const [courses, setCourses] = useState([]);
-  const [filteredCourses, setFilteredCourses] = useState([]);
+const [courseTypes, setCourseTypes] = useState([]);
+const [filteredCourses, setFilteredCourses] = useState([]);
   const [students, setStudents] = useState([]);
   const [selectedStudents, setSelectedStudents] = useState([]);
 
@@ -19,29 +20,33 @@ export default function Promotion() {
   );
 
   useEffect(() => {
-    fetchSchools();
-    fetchCourses();
+   fetchSchools();
+fetchCourses();
+fetchCourseTypes();
 
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
-    if (!courseType) {
-      setFilteredCourses([]);
-      return;
-    }
+useEffect(() => {
 
-    const filtered = courses.filter(
-      (course) => course.course_type === courseType
-    );
+  if (!courseType) {
+    setFilteredCourses([]);
+    return;
+  }
 
-    setFilteredCourses(filtered);
-    setCourseId("");
-    setPromoteCourse("");
-  }, [courseType, courses]);
+  const filtered = courses.filter(
+    (course) =>
+      String(course.course_type) === String(courseType)
+  );
 
+  setFilteredCourses(filtered);
+
+  setCourseId("");
+  setPromoteCourse("");
+
+}, [courseType, courses]);
   const fetchSchools = async () => {
     try {
       const res = await API.get("/info/schools/");
@@ -59,6 +64,19 @@ export default function Promotion() {
       console.log(err);
     }
   };
+
+  const fetchCourseTypes = async () => {
+  try {
+    const res = await API.get(
+      "/info/course-types/"
+    );
+
+    setCourseTypes(res.data);
+
+  } catch (err) {
+    console.log(err);
+  }
+};
 
   const loadStudents = async () => {
     if (!schoolId || !courseId) {
@@ -161,14 +179,25 @@ export default function Promotion() {
             <div style={styles.inputGroup}>
               <label style={styles.label}>Academic Course Type</label>
               <select
-                value={courseType}
-                onChange={(e) => setCourseType(e.target.value)}
-                style={styles.select}
-              >
-                <option value="">Course Type</option>
-                <option value="abacus">Abacus</option>
-                <option value="vedic_maths">Vedic Maths</option>
-              </select>
+  value={courseType}
+  onChange={(e) =>
+    setCourseType(e.target.value)
+  }
+  style={styles.select}
+>
+  <option value="">
+    Course Type
+  </option>
+
+  {courseTypes.map((type) => (
+    <option
+      key={type.id}
+      value={type.id}
+    >
+      {type.name}
+    </option>
+  ))}
+</select>
             </div>
 
             <div style={styles.inputGroup}>
@@ -180,10 +209,14 @@ export default function Promotion() {
               >
                 <option value="">Current Level</option>
                 {filteredCourses.map((course) => (
-                  <option key={course.id} value={course.id}>
-                    {course.course_type === "vedic_maths" ? "Vedic Maths" : "Abacus"} — Level {course.level}
-                  </option>
-                ))}
+  <option
+    key={course.id}
+    value={course.id}
+  >
+    {course.level_name}
+  </option>
+))}
+                
               </select>
             </div>
           </div>
@@ -239,7 +272,7 @@ export default function Promotion() {
                     <td style={styles.td}>{student.parent_name || "—"}</td>
                     <td style={styles.td}>
                       <span style={styles.levelBadge}>
-                        Level {student.level || "—"}
+                        Level {student.level_name || "—"}
                       </span>
                     </td>
                   </tr>
@@ -269,10 +302,13 @@ export default function Promotion() {
               >
                 <option value="">Promote To Level...</option>
                 {filteredCourses.map((course) => (
-                  <option key={course.id} value={course.id}>
-                    {course.course_type === "vedic_maths" ? "Vedic Maths" : "Abacus"} — Level {course.level}
-                  </option>
-                ))}
+  <option
+    key={course.id}
+    value={course.id}
+  >
+    {course.level_name}
+  </option>
+))}
               </select>
             </div>
 

@@ -156,11 +156,11 @@ export default function Students() {
                     </td>
                     <td style={styles.td}>
                       <span style={styles.courseBadge}>
-                        {student.course_name || "General Program"}
+                        {student.course_type_name || "—"}
                       </span>
                     </td>
                     <td style={styles.td}>
-                      <span style={styles.levelMarker}> {student.level}</span>
+                      <span style={styles.levelMarker}> {student.level_name || "—"}</span>
                     </td>
                     <td style={styles.td}>{student.parent_name || "—"}</td>
                     <td style={styles.td}>{student.parent_contact || "—"}</td>
@@ -253,17 +253,13 @@ const styles = {
     background: "var(--bg-layout)",
     color: "#6080E8",
     border: "1px solid #6080E8",
-    width: "32px",
-    height: "32px",
-    borderRadius: "50%",
+    padding: "6px 10px",
+    borderRadius: "6px",
     cursor: "pointer",
     fontWeight: "700",
-    fontSize: "16px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    boxSizing: "border-box",
+    fontSize: "14px",
     whiteSpace: "nowrap",
+    boxSizing: "border-box",
   },
   container: {
     width: "100%",

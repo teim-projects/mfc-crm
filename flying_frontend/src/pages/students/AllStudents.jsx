@@ -140,11 +140,11 @@ export default function AllStudents() {
                     </td>
                     <td style={styles.td}>
                       <span style={styles.courseBadge}>
-                        {student.course_name || "General Program"}
+                        {student.course_type_name || "General Program"}
                       </span>
                     </td>
                     <td style={styles.td}>
-                      <span style={styles.levelMarker}> {student.level}</span>
+                      <span style={styles.levelMarker}> {student.level_name}</span>
                     </td>
                     <td style={styles.td}>{student.parent_name || "—"}</td>
                     <td style={styles.td}>{student.parent_contact || "—"}</td>

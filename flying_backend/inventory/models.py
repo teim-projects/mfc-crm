@@ -1,6 +1,7 @@
 from django.db import models
 
-from info.models import Course
+from info.models import Course,School , Student, StudentEnrollment,CourseType, CourseLevel
+
 
 from django.core.exceptions import ValidationError
 
@@ -14,11 +15,7 @@ class Product(models.Model):
         ('bag', 'Bag'),
     )
 
-    COURSE_TYPES = (
-        ('vedic_maths', 'Vedic Maths'),
-        ('abacus', 'Abacus'),
-        ('common', 'Common'),
-    )
+    
 
     product_name = models.CharField(
         max_length=255
@@ -30,10 +27,12 @@ class Product(models.Model):
     )
 
     # 🎯 ALWAYS SELECTED
-    course_type = models.CharField(
-        max_length=50,
-        choices=COURSE_TYPES
-    )
+    course_type = models.ForeignKey(
+    CourseType,
+    on_delete=models.SET_NULL,
+    null=True,
+    blank=True
+)
 
     # 🎯 ONLY FOR BOOKS
     course = models.ForeignKey(
@@ -42,6 +41,13 @@ class Product(models.Model):
         blank=True,
         null=True
     )
+
+    course_level = models.ForeignKey(
+    CourseLevel,
+    on_delete=models.SET_NULL,
+    null=True,
+    blank=True
+)
 
     product_code = models.CharField(
         max_length=100,
@@ -71,41 +77,36 @@ class Product(models.Model):
 
     # ✅ VALIDATION
     def clean(self):
-
-        # 📚 BOOK
+    
+        # BOOK
         if self.product_type == "book":
-
-            if not self.course:
-
+    
+            if not self.course_type:
                 raise ValidationError({
-                    "course":
-                    "Book must have course"
+                    "course_type": "Course Type is required"
                 })
-
-            # auto sync course type
-            self.course_type = (
-                self.course.course_type
-            )
-
-        # 🧮 INSTRUMENT
+    
+            if not self.course_level:
+                raise ValidationError({
+                    "course_level": "Course Level is required"
+                })
+    
+        # INSTRUMENT
         elif self.product_type == "instrument":
-
-            # no exact course needed
+    
             self.course = None
-
-            if self.course_type == "common":
-
+    
+            if not self.course_type:
                 raise ValidationError({
-                    "course_type":
-                    "Instrument cannot be common"
+                    "course_type": "Course Type is required"
                 })
-
-        # 🎒 BAG
+    
+        # BAG
         elif self.product_type == "bag":
-
+    
             self.course = None
-
-            self.course_type = "common"
+            self.course_type = None
+            self.course_level = None
 
     # ✅ AUTO PRODUCT CODE
     def save(self, *args, **kwargs):
@@ -117,38 +118,35 @@ class Product(models.Model):
             )
 
             # 📚 BOOK
-            if (
-                self.product_type == "book"
-                and self.course
-            ):
 
+            if self.product_type == "book":
+            
                 course_short = (
-                    "AB"
-                    if self.course.course_type
-                    == "abacus"
-                    else "VM"
-                )
-
+                    self.course_type.name[:2].upper()
+                    if self.course_type
+                    else "NA"
+)
+            
                 level_short = (
-                    self.course.level
-                    .replace("Level ", "L")
-                )
-
+                    f"L{self.course_level.order_no}"
+                    if self.course_level
+                    else "L0"
+)
+            
                 self.product_code = (
                     f"BOOK-{course_short}-"
                     f"{level_short}-{last_id:03d}"
-                )
+                )            
 
             # 🧮 INSTRUMENT
             elif self.product_type == "instrument":
-
+            
                 course_short = (
-                    "AB"
+                    self.course_type.name[:2].upper()
                     if self.course_type
-                    == "abacus"
-                    else "VM"
-                )
-
+                    else "NA"
+)
+            
                 self.product_code = (
                     f"INST-{course_short}-"
                     f"{last_id:03d}"

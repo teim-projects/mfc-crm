@@ -41,36 +41,39 @@ class School(models.Model):
 from django.db import models
 
 
+class CourseType(models.Model):
+    name = models.CharField(max_length=100)
+    code = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+class CourseLevel(models.Model):
+    course_type = models.ForeignKey(
+        CourseType,
+        on_delete=models.CASCADE,
+        related_name="levels"
+    )
+    level_name = models.CharField(max_length=100)
+    order_no = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.course_type.name} - {self.level_name}"        
+
 class Course(models.Model):
 
-    COURSE_CHOICES = (
-        ('vedic_maths', 'Vedic Maths'),
-        ('abacus', 'Abacus'),
+    
+
+    course_type = models.ForeignKey(
+        CourseType,
+        on_delete=models.CASCADE
+        
     )
 
-    LEVEL_CHOICES = (
-        ('Level 1', 'Level 1'),
-        ('Level 2', 'Level 2'),
-        ('Level 3', 'Level 3'),
-        ('Level 4', 'Level 4'),
-        ('Level 5', 'Level 5'),
-        ('Level 6', 'Level 6'),
-        ('Level 7', 'Level 7'),
-        ('Level 8', 'Level 8'),
-        ('Level 9', 'Level 9'),
-        ('Level 10', 'Level 10'),
-        ('Level 11', 'Level 11'),
-        ('Level 12', 'Level 12'),
-    )
-
-    course_type = models.CharField(
-        max_length=50,
-        choices=COURSE_CHOICES
-    )
-
-    level = models.CharField(
-        max_length=20,
-        choices=LEVEL_CHOICES
+    level = models.ForeignKey(
+        CourseLevel,
+        on_delete=models.CASCADE
     )
 
     tuition_fees = models.DecimalField(
@@ -92,26 +95,26 @@ class Course(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def clean(self):
+    # def clean(self):
 
-        # 🚀 VEDIC MATHS ONLY 3 LEVELS
-        if self.course_type == "vedic_maths":
+    #     # 🚀 VEDIC MATHS ONLY 3 LEVELS
+    #     if self.course_type == "vedic_maths":
 
-            allowed_levels = [
-                "Level 1",
-                "Level 2",
-                "Level 3"
-            ]
+    #         allowed_levels = [
+    #             "Level 1",
+    #             "Level 2",
+    #             "Level 3"
+    #         ]
 
-            if self.level not in allowed_levels:
+    #         if self.level not in allowed_levels:
 
-                raise ValidationError({
-                    "level":
-                    "Vedic Maths only supports Level 1 to Level 3"
-                })
+    #             raise ValidationError({
+    #                 "level":
+    #                 "Vedic Maths only supports Level 1 to Level 3"
+    #             })
 
     def __str__(self):
-        return f"{self.get_course_type_display()} - {self.level}"
+        return f"{self.course_type.name} - {self.level.level_name}"
 
 
 class Student(models.Model):
@@ -165,10 +168,7 @@ class Student(models.Model):
         related_name="students"
     )
 
-    # 🎚️ COURSE LEVEL
-    level = models.CharField(
-        max_length=20
-    )
+   
 
     # 👨 PARENT INFO
     parent_name = models.CharField(

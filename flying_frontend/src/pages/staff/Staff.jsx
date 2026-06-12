@@ -179,12 +179,14 @@ export default function Staff() {
                           Edit
                         </button>
 
-                        <button
-                          style={styles.deleteBtn}
-                          onClick={() => deleteStaff(user.id)}
-                        >
-                          Delete
-                        </button>
+                        {!user.is_superuser && (
+  <button
+    style={styles.deleteBtn}
+    onClick={() => deleteStaff(user.id)}
+  >
+    Delete
+  </button>
+)}
                       </div>
                     </td>
                   </tr>

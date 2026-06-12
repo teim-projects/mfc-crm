@@ -15,6 +15,20 @@ from .views import (
     PromoteStudentView
 )
 
+from .views import (
+    CourseTypeCreateView,
+    CourseTypeListView,
+    CourseTypeDetailView,
+    CourseTypeUpdateView,
+    CourseTypeDeleteView,
+
+    CourseLevelCreateView,
+    CourseLevelListView,
+    CourseLevelDetailView,
+    CourseLevelUpdateView,
+    CourseLevelDeleteView,
+)
+
 urlpatterns = [
 
     # CREATE
@@ -62,4 +76,28 @@ urlpatterns = [
     path("enrollments/",StudentEnrollmentListView.as_view()),
 
     path( "students/promote/<int:pk>/", PromoteStudentView.as_view()),
+
+    # COURSE TYPE
+
+    path("course-types/",CourseTypeListView.as_view()),
+    
+    path(  "course-types/create/",  CourseTypeCreateView.as_view()),
+    
+    path(   "course-types/<int:pk>/",   CourseTypeDetailView.as_view()),
+    
+    path( "course-types/update/<int:pk>/", CourseTypeUpdateView.as_view()),
+    
+    path(   "course-types/delete/<int:pk>/",   CourseTypeDeleteView.as_view()),
+
+    # COURSE LEVEL
+
+    path(   "course-levels/",   CourseLevelListView.as_view()),
+    
+    path(  "course-levels/create/",  CourseLevelCreateView.as_view()),
+    
+    path(  "course-levels/<int:pk>/",  CourseLevelDetailView.as_view()),
+    
+    path(  "course-levels/update/<int:pk>/",  CourseLevelUpdateView.as_view()),
+    
+    path(  "course-levels/delete/<int:pk>/",  CourseLevelDeleteView.as_view()),
 ]

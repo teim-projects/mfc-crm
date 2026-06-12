@@ -144,12 +144,14 @@ export default function Products() {
                         {product.product_type ? product.product_type.toUpperCase() : "—"}
                       </span>
                     </td>
-                    <td style={{ ...styles.td, color: "var(--text-td)" }}>
-                      {product.course_type_name === "vedic_maths" ? "Vedic Maths" : product.course_type_name === "abacus" ? "Abacus" : product.course_type_name || "—"}
-                    </td>
-                    <td style={{ ...styles.td, fontWeight: "500", color: "var(--text-muted)" }}>
-                      {product.course_level || "Common"}
-                    </td>
+                   <td style={{ ...styles.td, color: "var(--text-td)" }}>
+  {product.course_type_name || "Common"}
+</td>
+                   <td style={{ ...styles.td, fontWeight: "500", color: "var(--text-muted)" }}>
+  {product.course_level_name ||
+    product.course_level_display ||
+    "Common"}
+</td>
                     <td style={styles.td}>
                       <span style={styles.rateLabel}>
                         ₹ {Number(product.unit_price || 0).toLocaleString("en-IN")}

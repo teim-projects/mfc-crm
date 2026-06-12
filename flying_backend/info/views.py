@@ -2,8 +2,15 @@ from django.shortcuts import render
 
 # Create your views here.
 from rest_framework import generics
-from .models import School, Course ,Student
-from .serializers import SchoolSerializer ,CourseSerializer , StudentSerializer,StudentEnrollment,StudentEnrollmentSerializer
+from .models import School, Course ,Student,CourseType,CourseLevel,StudentEnrollment
+from .serializers import (
+    SchoolSerializer,
+    CourseSerializer,
+    StudentSerializer,
+    StudentEnrollmentSerializer,
+    CourseTypeSerializer,
+    CourseLevelSerializer,
+)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -48,6 +55,85 @@ class SchoolDetailView(generics.RetrieveAPIView):
     serializer_class = SchoolSerializer
     permission_classes = [IsAuthenticated]
 
+
+
+
+
+class CourseTypeCreateView(generics.CreateAPIView):
+    queryset = CourseType.objects.all()
+    serializer_class = CourseTypeSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class CourseTypeListView(generics.ListAPIView):
+    queryset = CourseType.objects.all().order_by("name")
+    serializer_class = CourseTypeSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class CourseTypeDetailView(generics.RetrieveAPIView):
+    queryset = CourseType.objects.all()
+    serializer_class = CourseTypeSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class CourseTypeUpdateView(generics.UpdateAPIView):
+    queryset = CourseType.objects.all()
+    serializer_class = CourseTypeSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class CourseTypeDeleteView(generics.DestroyAPIView):
+    queryset = CourseType.objects.all()
+    serializer_class = CourseTypeSerializer
+    permission_classes = [IsAuthenticated]
+
+class CourseLevelCreateView(generics.CreateAPIView):
+    queryset = CourseLevel.objects.all()
+    serializer_class = CourseLevelSerializer
+    permission_classes = [IsAuthenticated]
+
+class CourseLevelListView(generics.ListAPIView):
+
+    serializer_class = CourseLevelSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+
+        queryset = CourseLevel.objects.select_related(
+            "course_type"
+        ).order_by(
+            "course_type",
+            "order_no"
+        )
+
+        course_type = self.request.GET.get(
+            "course_type"
+        )
+
+        if course_type:
+            queryset = queryset.filter(
+                course_type_id=course_type
+            )
+
+        return queryset
+
+class CourseLevelDetailView(generics.RetrieveAPIView):
+    queryset = CourseLevel.objects.all()
+    serializer_class = CourseLevelSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class CourseLevelUpdateView(generics.UpdateAPIView):
+    queryset = CourseLevel.objects.all()
+    serializer_class = CourseLevelSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class CourseLevelDeleteView(generics.DestroyAPIView):
+    queryset = CourseLevel.objects.all()
+    serializer_class = CourseLevelSerializer
+    permission_classes = [IsAuthenticated]  
 
 
 
@@ -219,10 +305,7 @@ class PromoteStudentView(
 
         # UPDATE STUDENT
 
-        student.course =new_course
-
-        student.level =new_course.level
-
+        student.course = new_course
         student.save()
 
         return Response({

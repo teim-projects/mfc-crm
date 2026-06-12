@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import School , Student, StudentEnrollment
+from .models import CourseType, CourseLevel
 
 
 class SchoolSerializer(serializers.ModelSerializer):
@@ -13,36 +14,44 @@ class SchoolSerializer(serializers.ModelSerializer):
 from rest_framework import serializers
 from .models import Course
 
+class CourseTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourseType
+        fields = "__all__"
+
+
+class CourseLevelSerializer(serializers.ModelSerializer):
+
+    course_type_name = serializers.CharField(
+        source="course_type.name",
+        read_only=True
+    )
+
+    class Meta:
+        model = CourseLevel
+        fields = "__all__"        
+
+
 
 class CourseSerializer(serializers.ModelSerializer):
 
+    
+    course_type_name = serializers.CharField(
+            source="course_type.name",
+            read_only=True
+        )
+    
+    level_name = serializers.CharField(
+        source="level.level_name",
+        read_only=True
+    )    
+    
     class Meta:
         model = Course
         fields = "__all__"
 
     def validate(self, data):
-
-        course_type = data.get("course_type")
-        level = data.get("level")
-
-        # 🚀 VEDIC MATHS VALIDATION
-        if course_type == "vedic_maths":
-
-            allowed_levels = [
-                "Level 1",
-                "Level 2",
-                "Level 3"
-            ]
-
-            if level not in allowed_levels:
-
-                raise serializers.ValidationError({
-                    "level":
-                    "Vedic Maths only supports Level 1 to Level 3"
-                })
-
         return data
-
 
 class StudentSerializer(serializers.ModelSerializer):
 
@@ -51,18 +60,28 @@ class StudentSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
-    course_name = serializers.CharField(
-        source="course.course_type",
+    course_type_name = serializers.CharField(
+        source="course.course_type.name",
         read_only=True
     )
 
+    level_name = serializers.CharField(
+        source="course.level.level_name",
+        read_only=True
+    )
+
+    course_display = serializers.SerializerMethodField()
+
     class Meta:
         model = Student
-
         fields = "__all__"
 
-
-
+    def get_course_display(self, obj):
+        return (
+            f"{obj.course.course_type.name}"
+            f" - "
+            f"{obj.course.level.level_name}"
+        )
 
 
 class StudentEnrollmentSerializer(
@@ -79,13 +98,13 @@ class StudentEnrollmentSerializer(
         read_only=True
     )
 
-    course_name =serializers.CharField(
-        source="course.course_type",
-        read_only=True
-    )
+    course_type_name = serializers.CharField(
+    source="course.course_type.name",
+    read_only=True
+)
 
-    level =serializers.CharField(
-        source="course.level",
+    level_name = serializers.CharField(
+        source="course.level.level_name",
         read_only=True
     )
 

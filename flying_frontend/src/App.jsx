@@ -8,6 +8,8 @@ import Schools from "./pages/school/Schools";
 import AddSchool from "./pages/school/AddSchool";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthWatcher from "./components/AuthWatcher";
+import CourseTypes from "./pages/course/CourseTypes";
+import CourseLevels from "./pages/course/CourseLevels";
 import Courses from "./pages/course/Courses";
 import AddCourse from "./pages/course/AddCourse";
 import Students from "./pages/students/Students";
@@ -43,7 +45,11 @@ function App() {
         <Route path="/schools" element={ <ProtectedRoute> <Schools />   </ProtectedRoute> } /> 
         <Route path="/schools/add"element={ <ProtectedRoute><AddSchool /> </ProtectedRoute> } />
         <Route  path="/schools/edit/:id"element={    <ProtectedRoute>    <AddSchool />  </ProtectedRoute>}/>
-        
+
+
+        <Route path="/course-types" element={   <ProtectedRoute>     <CourseTypes />   </ProtectedRoute> }/>
+
+        <Route path="/course-levels" element={   <ProtectedRoute>     <CourseLevels />   </ProtectedRoute> }/>
         <Route path="/courses" element={  <ProtectedRoute>  <Courses />  </ProtectedRoute> }/>
 
         <Route path="/courses/add" element={ <ProtectedRoute><AddCourse /></ProtectedRoute>}/>
@@ -85,7 +91,7 @@ function App() {
         <Route path="/billing/create" element={<ProtectedRoute><CreateReceipt /></ProtectedRoute>} />
         <Route path="/billing/receipt-detail/:receiptId" element={<ProtectedRoute><ReceiptDetail /></ProtectedRoute>} />
         <Route path="/promotions" element={   <ProtectedRoute>     <Promotion />   </ProtectedRoute> }/>
-        
+        <Route path="/course-levels"element={  <ProtectedRoute>    <CourseLevels />  </ProtectedRoute>}/>
 
         
 

@@ -4,9 +4,9 @@ import API from "../../api";
 export default function AddStudent({ isOpen, schoolId, id, onClose, onSuccess }) {
   const [studentSchoolId, setStudentSchoolId] = useState(null);
   const [allCourses, setAllCourses] = useState([]);
-  const [filteredCourses, setFilteredCourses] = useState([]);
-  const [courseType, setCourseType] = useState("");
-
+const [courseTypes, setCourseTypes] = useState([]);
+const [filteredCourses, setFilteredCourses] = useState([]);
+const [courseType, setCourseType] = useState("");
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" ? window.innerWidth <= 600 : false
   );
@@ -43,7 +43,13 @@ export default function AddStudent({ isOpen, schoolId, id, onClose, onSuccess })
   const fetchCourses = async () => {
     try {
       const res = await API.get("/info/courses/");
-      setAllCourses(res.data);
+setAllCourses(res.data);
+
+const typeRes = await API.get(
+  "/info/course-types/"
+);
+
+setCourseTypes(typeRes.data);
 
       if (id) {
         const studentRes = await API.get(`/info/students/${id}/`);
@@ -57,11 +63,17 @@ export default function AddStudent({ isOpen, schoolId, id, onClose, onSuccess })
         );
 
         if (selectedCourse) {
-          setCourseType(selectedCourse.course_type);
-          const filtered = res.data.filter(
-            (course) => course.course_type === selectedCourse.course_type
-          );
-          setFilteredCourses(filtered);
+          setCourseType(
+  selectedCourse.course_type
+);
+
+const filtered = res.data.filter(
+  (course) =>
+    String(course.course_type) ===
+    String(selectedCourse.course_type)
+);
+
+setFilteredCourses(filtered);
         }
       } else {
         setFormData({
@@ -87,30 +99,29 @@ export default function AddStudent({ isOpen, schoolId, id, onClose, onSuccess })
     }
   };
 
-  const handleChange = (e) => {
+  const handleChange = async (e) => {
     const { name, value } = e.target;
 
     if (name === "course_type") {
-      setCourseType(value);
-      const filtered = allCourses.filter((course) => course.course_type === value);
-      setFilteredCourses(filtered);
-      setFormData({
-        ...formData,
-        course: "",
-        level: "",
-      });
-      return;
-    }
 
-    if (name === "course") {
-      const selectedCourse = allCourses.find((course) => course.id == value);
-      setFormData({
-        ...formData,
-        course: value,
-        level: selectedCourse?.level || "",
-      });
-      return;
-    }
+  setCourseType(value);
+
+  const filtered = allCourses.filter(
+    (course) =>
+      String(course.course_type) === String(value)
+  );
+
+  setFilteredCourses(filtered);
+
+  setFormData(prev => ({
+    ...prev,
+    course: ""
+  }));
+
+  return;
+}
+
+   
 
     setFormData({
       ...formData,
@@ -225,34 +236,49 @@ export default function AddStudent({ isOpen, schoolId, id, onClose, onSuccess })
             <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Course Program *</label>
               <select
-                name="course_type"
-                value={courseType}
-                style={styles.select}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select Course Type</option>
-                <option value="vedic_maths">Vedic Maths</option>
-                <option value="abacus">Abacus</option>
-              </select>
+  name="course_type"
+  value={courseType}
+  style={styles.select}
+  onChange={handleChange}
+  required
+>
+  <option value="">
+    Select Course Type
+  </option>
+
+  {courseTypes.map((item) => (
+    <option
+      key={item.id}
+      value={item.id}
+    >
+      {item.name}
+    </option>
+  ))}
+</select>
             </div>
 
             <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
               <label style={styles.fieldLabel}>Assigned Level Term *</label>
               <select
-                name="course"
-                value={formData.course || ""}
-                style={styles.select}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select Course Level</option>
-                {filteredCourses.map((course) => (
-                  <option key={course.id} value={course.id}>
-                    {course.course_type} -  {course.level}
-                  </option>
-                ))}
-              </select>
+  name="course"
+  value={formData.course || ""}
+  style={styles.select}
+  onChange={handleChange}
+  required
+>
+  <option value="">
+    Select Course
+  </option>
+
+  {filteredCourses.map((course) => (
+    <option
+      key={course.id}
+      value={course.id}
+    >
+      {course.course_type_name} - {course.level_name}
+    </option>
+  ))}
+</select>
             </div>
 
             {/* PARENTAL INFO */}

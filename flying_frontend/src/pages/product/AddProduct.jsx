@@ -3,18 +3,21 @@ import API from "../../api";
 
 export default function AddProduct({ isOpen, id, onClose, onSuccess }) {
   const [courses, setCourses] = useState([]);
+const [courseTypes, setCourseTypes] = useState([]);
+const [courseLevels, setCourseLevels] = useState([]);
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" ? window.innerWidth <= 600 : false
   );
   const [formData, setFormData] = useState({
-    product_name: "",
-    product_type: "",
-    course_type: "",
-    course: "",
-    unit_price: "",
-    description: "",
-    is_active: true,
-  });
+  product_name: "",
+  product_type: "",
+  course_type: "",
+  course_level: "",
+  course: "",
+  unit_price: "",
+  description: "",
+  is_active: true,
+});
 
   // Track viewport resizing for dynamic layout adjustment
   useEffect(() => {
@@ -25,7 +28,8 @@ export default function AddProduct({ isOpen, id, onClose, onSuccess }) {
 
   useEffect(() => {
     if (isOpen) {
-      fetchCourses();
+  fetchCourses();
+  fetchCourseTypes();
       if (id) {
         fetchProduct();
       } else {
@@ -50,36 +54,72 @@ export default function AddProduct({ isOpen, id, onClose, onSuccess }) {
       console.log(err);
     }
   };
+const fetchCourseTypes = async () => {
+  try {
+    const res = await API.get(
+      "/info/course-types/"
+    );
 
+    setCourseTypes(res.data);
+
+  } catch (err) {
+    console.log(err);
+  }
+};
   const fetchProduct = async () => {
     try {
       const res = await API.get(`/inventory/products/${id}/`);
       setFormData({
-        ...res.data,
-        course: res.data.course || "",
-      });
+  ...res.data,
+  course_type: res.data.course_type || "",
+  course_level: res.data.course_level || "",
+  course: res.data.course || "",
+});
     } catch (err) {
       console.log(err);
     }
   };
 
-  const filteredCourses = courses.filter((course) => {
-    return course.course_type === formData.course_type;
-  });
+useEffect(() => {
+
+  const loadLevels = async () => {
+
+    if (!formData.course_type) {
+      setCourseLevels([]);
+      return;
+    }
+
+    try {
+
+      const res = await API.get(
+        `/info/course-levels/?course_type=${formData.course_type}`
+      );
+
+      setCourseLevels(res.data);
+
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  loadLevels();
+
+}, [formData.course_type]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     if (name === "product_type") {
       if (value === "bag") {
-        setFormData({
-          ...formData,
-          product_type: value,
-          course_type: "common",
-          course: "",
-        });
-        return;
-      }
+  setFormData({
+    ...formData,
+    product_type: value,
+  course_type: "",
+  course_level: "",
+  course: "",
+  });
+  return;
+}
       setFormData({
         ...formData,
         product_type: value,
@@ -89,14 +129,19 @@ export default function AddProduct({ isOpen, id, onClose, onSuccess }) {
       return;
     }
 
-    if (name === "course_type") {
-      setFormData({
-        ...formData,
-        course_type: value,
-        course: "",
-      });
-      return;
-    }
+   if (name === "course_type") {
+
+  setFormData({
+    ...formData,
+    course_type: value,
+  course_level: "",
+  course: "",
+  });
+
+  setCourseLevels([]);
+
+  return;
+}
 
     setFormData({
       ...formData,
@@ -110,9 +155,10 @@ export default function AddProduct({ isOpen, id, onClose, onSuccess }) {
       const payload = { ...formData };
 
       if (payload.product_type === "bag") {
-        payload.course_type = "common";
-        payload.course = null;
-      }
+ payload.course_type = null;
+payload.course_level = null;
+payload.course = null;
+}
 
       if (payload.product_type === "instrument") {
         payload.course = null;
@@ -198,19 +244,34 @@ export default function AddProduct({ isOpen, id, onClose, onSuccess }) {
               formData.product_type === "bag") && (
               <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
                 <label style={styles.fieldLabel}>Course Alignment Type *</label>
-                <select
-                  name="course_type"
-                  value={formData.course_type}
-                  onChange={handleChange}
-                  style={styles.select}
-                  required
-                  disabled={formData.product_type === "bag"}
-                >
-                  <option value="">Select Course Alignment</option>
-                  <option value="abacus">Abacus</option>
-                  <option value="vedic_maths">Vedic Maths</option>
-                  {formData.product_type === "bag" && <option value="common">Common</option>}
-                </select>
+               {formData.product_type === "bag" ? (
+  <input
+    value="Common"
+    disabled
+    style={styles.input}
+  />
+) : (
+  <select
+    name="course_type"
+    value={formData.course_type}
+    onChange={handleChange}
+    style={styles.select}
+    required
+  >
+    <option value="">
+      Select Course Alignment
+    </option>
+
+    {courseTypes.map((type) => (
+      <option
+        key={type.id}
+        value={type.id}
+      >
+        {type.name}
+      </option>
+    ))}
+  </select>
+)}
               </div>
             )}
 
@@ -218,22 +279,60 @@ export default function AddProduct({ isOpen, id, onClose, onSuccess }) {
             {formData.product_type === "book" && (
               <div style={{ ...styles.inputContainer, gridColumn: isMobile ? "span 1" : "initial" }}>
                 <label style={styles.fieldLabel}>Specific Course Target Level *</label>
-                <select
-                  name="course"
-                  value={formData.course}
-                  onChange={handleChange}
-                  style={styles.select}
-                  required
-                >
+               <select
+  name="course_level"
+  value={formData.course_level}
+  onChange={handleChange}
+  style={styles.select}
+  required
+>
                   <option value="">Select Associated Level</option>
-                  {filteredCourses.map((course) => (
-                    <option key={course.id} value={course.id}>
-                      {course.course_type === "abacus" ? "Abacus" : "Vedic Maths"} - {course.level}
-                    </option>
-                  ))}
+                 {courseLevels.map((level) => (
+  <option
+    key={level.id}
+    value={level.id}
+  >
+    {level.level_name}
+  </option>
+))}
                 </select>
               </div>
             )}
+
+
+            <div style={styles.inputContainer}>
+  <label style={styles.fieldLabel}>
+    Specific Course (Optional)
+  </label>
+
+  <select
+    name="course"
+    value={formData.course}
+    onChange={handleChange}
+    style={styles.select}
+  >
+    <option value="">
+      Select Course
+    </option>
+
+    {courses
+      .filter(
+        (c) =>
+          String(c.course_type) ===
+          String(formData.course_type)
+      )
+      .map((course) => (
+        <option
+          key={course.id}
+          value={course.id}
+        >
+          {course.course_type_name} -
+          {" "}
+          {course.level_name}
+        </option>
+      ))}
+  </select>
+</div>
 
             {/* STATIC LABEL LABELS */}
             {formData.product_type === "instrument" && (
