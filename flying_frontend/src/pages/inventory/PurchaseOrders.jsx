@@ -15,7 +15,6 @@ export default function PurchaseOrders() {
   const [targetPOId, setTargetPOId] = useState(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false); 
   const [viewOpen, setViewOpen] = useState(false);
-
   const [selectedPO, setSelectedPO] = useState(null);
 
   // Real-time responsive layout breakpoint observer
@@ -70,9 +69,7 @@ export default function PurchaseOrders() {
     }
   };
 
-  // =====================================
   // PAGINATION
-  // =====================================
   const totalPages = Math.ceil(filteredPOs.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedPOs = filteredPOs.slice(startIndex, startIndex + itemsPerPage);
@@ -100,7 +97,6 @@ export default function PurchaseOrders() {
           flexDirection: isMobile ? "column" : "row",
           width: isMobile ? "100%" : "auto"
         }}>
-          {/* COMPACT FILTER TRIGGER */}
           <button 
             style={{ ...styles.secondaryButton, width: isMobile ? "100%" : "auto" }} 
             onClick={() => setIsFilterOpen(true)}
@@ -137,8 +133,8 @@ export default function PurchaseOrders() {
                     {po.po_number}
                   </td>
                   <td style={{ ...styles.td, fontWeight: "500", color: "var(--text-main)" }}>{po.vendor_name}</td>
-                  <td style={styles.td}>{po.po_date}</td>
-                  <td style={styles.td}>{po.delivery_date}</td>
+                  <td style={{ ...styles.td, color: "var(--text-muted)" }}>{po.po_date}</td>
+                  <td style={{ ...styles.td, color: "var(--text-muted)" }}>{po.delivery_date}</td>
                   <td style={{ ...styles.td, fontWeight: "600", color: "var(--text-main)" }}>
                     ₹ {Number(po.grand_total || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </td>
@@ -150,8 +146,23 @@ export default function PurchaseOrders() {
                           setSelectedPO(po);
                           setViewOpen(true);
                         }}
+                        title="View Details"
                       >
                         +
+                      </button>
+                      <button 
+                        style={styles.viewPdfBtn} 
+                        onClick={() => window.open(`/api/inventory/po-pdf/${po.id}/`, '_blank')}
+                        title="View PDF"
+                      >
+                        View
+                      </button>
+                      <button 
+                        style={styles.downloadPdfBtn} 
+                        onClick={() => window.location.href = `/api/inventory/po-download/${po.id}/`}
+                        title="Download PDF"
+                      >
+                        📥
                       </button>
                       <button style={styles.editBtn} onClick={() => handleOpenEditModal(po.id)}>
                         Edit
@@ -213,18 +224,6 @@ export default function PurchaseOrders() {
 }
 
 const styles = {
-  recordBtn: {
-    background: "var(--bg-layout)",
-    color: "#6080E8",
-    border: "1px solid #6080E8",
-    padding: "6px 10px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontWeight: "700",
-    fontSize: "14px",
-    boxSizing: "border-box",
-    whiteSpace: "nowrap",
-  },
   container: {
     width: "100%",
     boxSizing: "border-box",
@@ -266,8 +265,44 @@ const styles = {
     color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid var(--border-main)", whiteSpace: "nowrap",
   },
   tr: { borderBottom: "1px solid var(--border-light)" },
-  td: { padding: "12px 20px", fontSize: "14px", color: "var(--text-td)", whiteSpace: "nowrap", verticalAlign: "middle" },
+  td: { padding: "14px 20px", fontSize: "14px", color: "var(--text-td)", whiteSpace: "nowrap", verticalAlign: "middle" },
   actionButtonGroup: { display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "row", flexWrap: "nowrap", gap: "6px" },
+  recordBtn: {
+    background: "var(--bg-layout)",
+    color: "#6080E8",
+    border: "1px solid #6080E8",
+    padding: "6px 10px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "700",
+    fontSize: "14px",
+    boxSizing: "border-box",
+    whiteSpace: "nowrap",
+  },
+  viewPdfBtn: {
+    background: "var(--bg-layout)",
+    color: "var(--text-main)",
+    border: "1px solid var(--border-main)",
+    padding: "6px 12px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "600",
+    fontSize: "12px",
+    boxSizing: "border-box",
+    whiteSpace: "nowrap",
+  },
+  downloadPdfBtn: {
+    background: "var(--bg-layout)",
+    color: "var(--text-main)",
+    border: "1px solid var(--border-main)",
+    padding: "6px 10px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "600",
+    fontSize: "13px",
+    boxSizing: "border-box",
+    whiteSpace: "nowrap",
+  },
   editBtn: { background: "transparent", color: "#6080E8", border: "1px solid #6080E8", padding: "6px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "12px", boxSizing: "border-box", whiteSpace: "nowrap" },
   deleteBtn: { background: "#ef4444", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "12px", boxSizing: "border-box", whiteSpace: "nowrap" },
   emptyState: { padding: "60px 20px", textAlign: "center", color: "var(--text-muted)" },

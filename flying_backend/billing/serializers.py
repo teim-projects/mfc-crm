@@ -323,3 +323,166 @@ class StudentReceiptSerializer(
         instance.save()
 
         return instance
+
+
+
+from rest_framework import serializers
+
+from .models import (
+    InvoiceDocument,
+    InvoiceDocumentItem
+)
+
+
+class InvoiceDocumentItemSerializer(
+    serializers.ModelSerializer
+):
+
+    class Meta:
+
+        model = InvoiceDocumentItem
+
+        exclude = ["document"]
+
+
+class InvoiceDocumentSerializer(
+    serializers.ModelSerializer
+):
+
+    items = InvoiceDocumentItemSerializer(
+        many=True
+    )
+
+    school_name = serializers.CharField(
+        source="school.school_name",
+        read_only=True
+    )
+
+    class Meta:
+
+        model = InvoiceDocument
+
+        fields = "__all__"
+
+    def create(
+        self,
+        validated_data
+    ):
+
+        items_data = validated_data.pop(
+            "items"
+        )
+
+        document = InvoiceDocument.objects.create(
+            **validated_data
+        )
+
+        subtotal = 0
+
+        for item_data in items_data:
+
+            item = InvoiceDocumentItem.objects.create(
+                document=document,
+                **item_data
+            )
+
+            subtotal += item.amount
+
+        document.subtotal = subtotal
+
+        document.gst_amount = (
+            subtotal *
+            document.gst_percent
+        ) / 100
+
+        document.grand_total = (
+            subtotal +
+            document.gst_amount
+        )
+
+        document.save()
+
+        return document
+
+    def update(
+        self,
+        instance,
+        validated_data
+    ):
+
+        items_data = validated_data.pop(
+            "items"
+        )
+
+        instance.document_type = validated_data.get(
+            "document_type",
+            instance.document_type
+        )
+
+        instance.school = validated_data.get(
+            "school",
+            instance.school
+        )
+
+        instance.invoice_date = validated_data.get(
+            "invoice_date",
+            instance.invoice_date
+        )
+
+        instance.challan_no = validated_data.get(
+            "challan_no",
+            instance.challan_no
+        )
+
+        instance.challan_date = validated_data.get(
+            "challan_date",
+            instance.challan_date
+        )
+
+        instance.gst_percent = validated_data.get(
+            "gst_percent",
+            instance.gst_percent
+        )
+
+        instance.remarks = validated_data.get(
+            "remarks",
+            instance.remarks
+        )
+
+
+        instance.gst_no = validated_data.get("gst_no", instance.gst_no)
+        instance.pan_no = validated_data.get("pan_no", instance.pan_no)
+        instance.state = validated_data.get("state", instance.state)
+        instance.state_code = validated_data.get("state_code", instance.state_code)
+        instance.city = validated_data.get("city", instance.city)        
+
+        instance.save()
+
+        instance.items.all().delete()
+
+        subtotal = 0
+
+        for item_data in items_data:
+
+            item = InvoiceDocumentItem.objects.create(
+                document=instance,
+                **item_data
+            )
+
+            subtotal += item.amount
+
+        instance.subtotal = subtotal
+
+        instance.gst_amount = (
+            subtotal *
+            instance.gst_percent
+        ) / 100
+
+        instance.grand_total = (
+            subtotal +
+            instance.gst_amount
+        )
+
+        instance.save()
+
+        return instance        

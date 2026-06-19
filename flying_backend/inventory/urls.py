@@ -40,6 +40,8 @@ urlpatterns = [
     path("stock/",StockListView.as_view()),
     path( "stock-transactions/", StockTransactionListView.as_view()),
     path("vendor-replacements/",VendorReplacementView.as_view()),
+    path('po-pdf/<int:pk>/', generate_po_pdf, name='po-pdf'),
+    path('po-download/<int:pk>/', download_po_pdf, name='po-download'),
     
     
 

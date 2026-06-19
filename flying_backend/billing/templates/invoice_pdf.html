@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }} - {{ document.document_no }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            color: #333;
+            padding: 40px;
+            background: #fff;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        /* Header Styles */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #6080E8;
+            padding-bottom: 15px;
+        }
+        
+        .header-left {
+            flex: 2;
+        }
+        
+        .header-right {
+            flex: 1;
+            text-align: right;
+        }
+        
+        .company-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #6080E8;
+        }
+        
+        .company-detail {
+            font-size: 10px;
+            margin: 2px 0;
+            color: #666;
+        }
+        
+        .invoice-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #6080E8;
+        }
+        
+        .copy-type-box {
+            font-size: 9px;
+            text-align: left;
+            margin-top: 10px;
+        }
+        
+        .copy-type {
+            margin: 2px 0;
+        }
+        
+        /* Invoice Details */
+        .invoice-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        
+        .invoice-left, .invoice-right {
+            flex: 1;
+        }
+        
+        .invoice-right {
+            text-align: right;
+        }
+        
+        /* Bill To Section */
+        .bill-to-section {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        
+        .bill-to-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .school-name {
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .school-address {
+            margin: 3px 0;
+            font-size: 10px;
+            color: #555;
+        }
+        
+        .gst-row {
+            display: flex;
+            gap: 30px;
+            margin-top: 5px;
+        }
+        
+        /* Items Table */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        
+        .items-table th,
+        .items-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+            font-size: 11px;
+        }
+        
+        .items-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        .total-row {
+            background-color: #f9f9f9;
+        }
+        
+        .total-label {
+            text-align: right;
+            font-weight: bold;
+        }
+        
+        .total-value {
+            font-weight: bold;
+        }
+        
+        /* GST Note */
+        .gst-note {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 10px;
+            font-style: italic;
+        }
+        
+        /* Amount in Words */
+        .amount-words {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        
+        /* Bank Details */
+        .bank-details {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        
+        .bank-details p {
+            margin: 3px 0;
+            font-size: 10px;
+        }
+        
+        /* Terms Section */
+        .terms-section {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .signature-section {
+            margin-top: 20px;
+            text-align: right;
+        }
+        
+        /* Remarks */
+        .remarks-section {
+            margin-top: 15px;
+            padding: 8px;
+            background-color: #fef3c7;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 9px;
+            color: #999;
+        }
+        
+        @media print {
+            body {
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header - YOUR COMPANY DETAILS (Hardcoded) -->
+        <div class="header">
+            <div class="header-left">
+                <div class="company-name">{{ company.name }}</div>
+                <div class="company-detail">{{ company.address }}</div>
+                <div class="company-detail">{{ company.contact }}</div>
+                <div class="company-detail">{{ company.email }}</div>
+                <div class="company-detail">GST : {{ company.gst }}</div>
+                <div class="company-detail">PAN NO. - {{ company.pan }}</div>
+            </div>
+            <div class="header-right">
+                <div class="invoice-title">{{ title }}</div>
+                <div class="copy-type-box">
+                    <div class="copy-type">☐ ORIGINAL for Recipient</div>
+                    <div class="copy-type">☐ DUPLICATE for Transporter</div>
+                    <div class="copy-type">☐ TRIPLICATE for Supplier</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Invoice Details -->
+       <!-- Invoice Details -->
+<div class="invoice-details">
+    <div class="invoice-left">
+        <p><strong>Invoice No. :</strong> {{ document.document_no }}</p>
+        <p><strong>Date of Issue :</strong> {{ document.invoice_date|date:"d/m/Y" }}</p>
+        {% if document.challan_no %}
+        <p><strong>Challan No. :</strong> {{ document.challan_no }}</p>
+        {% endif %}
+        {% if document.challan_date %}
+        <p><strong>Challan Date :</strong> {{ document.challan_date|date:"d/m/Y" }}</p>
+        {% endif %}
+    </div>
+    <div class="invoice-right">
+        <p><strong>Place of Supply :</strong> {{ place_of_supply.city }}</p>
+        <p><strong>State :</strong> {{ place_of_supply.state }}</p>
+        <p><strong>State Code :</strong> {{ place_of_supply.state_code }}</p>
+    </div>
+</div>
+
+        <!-- Bill To Section - SCHOOL/RECEIVER DETAILS (from invoice document) -->
+        <!-- Bill To Section - SCHOOL/RECEIVER DETAILS (from invoice document) -->
+<div class="bill-to-section">
+    <div class="bill-to-title">INVOICE TO (DETAILS OF RECEIVER)</div>
+    <div class="school-name">{{ document.school.school_name }}</div>
+    <div class="school-address">{{ document.school.address|default:"" }}</div>
+    <div class="school-address">{{ document.city|default:place_of_supply.city }}</div>
+    <div class="gst-row">
+        <p><strong>GST No.:</strong> {{ document.gst_no|default:"—" }}</p>
+        <p><strong>State Code:</strong> {{ document.state_code|default:place_of_supply.state_code }}</p>
+    </div>
+</div>
+
+        <!-- Items Table -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>SN</th>
+                    <th>Description of Product</th>
+                    <th>Qty</th>
+                    <th>Rate (₹)</th>
+                    <th>Amt (₹)</th>
+                    <th>Total (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in document.items.all %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ item.description }}</td>
+                    <td>{{ item.qty }}</td>
+                    <td>₹{{ item.rate|floatformat:2 }}</td>
+                    <td>₹{{ item.amount|floatformat:2 }}</td>
+                    <td>₹{{ item.amount|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+                <tr class="total-row">
+                    <td colspan="5" class="total-label">Total :</td>
+                    <td class="total-value">₹{{ grand_total|floatformat:2 }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- GST Note -->
+        <div class="gst-note">
+            <p>Inclusive of GST {{ gst_percent }}% under composition scheme</p>
+        </div>
+
+        <!-- Amount in Words -->
+        <div class="amount-words">
+            <p><strong>Total Invoice Amount in Word:</strong> {{ amount_in_words }}</p>
+        </div>
+
+        <!-- Bank Details -->
+        <div class="bank-details">
+            <p><strong>Bank Details :</strong></p>
+            <p>Account Name: HAVMORE CORP</p>
+            <p>Bank Name: —</p>
+            <p>Account No: —</p>
+            <p>IFSC Code: —</p>
+        </div>
+
+        <!-- Terms & Conditions -->
+        <div class="terms-section">
+            <p><strong>Terms & Conditions :</strong></p>
+            <p>Certified that the particulars given above are true and correct.</p>
+            <div class="signature-section">
+                <p>Authorised Signatory</p>
+            </div>
+        </div>
+
+        <!-- Remarks -->
+        {% if document.remarks %}
+        <div class="remarks-section">
+            <p><strong>Remarks:</strong> {{ document.remarks }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>This is a computer generated document and does not require physical signature.</p>
+        </div>
+    </div>
+</body>
+</html>

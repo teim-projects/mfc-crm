@@ -30,6 +30,8 @@ import SchoolStudents from "./pages/billing/SchoolStudents";
 import CreateReceipt from "./pages/billing/CreateReceipt";
 import ReceiptDetail from "./pages/billing/ReceiptDetail";
 import Promotion from "./pages/students/Promotion";
+import InvoiceDocuments from "./pages/billing/InvoiceDocuments";
+import AddInvoiceDocument from "./pages/billing/AddInvoiceDocument";
 
 function App() {
   return (
@@ -92,6 +94,14 @@ function App() {
         <Route path="/billing/receipt-detail/:receiptId" element={<ProtectedRoute><ReceiptDetail /></ProtectedRoute>} />
         <Route path="/promotions" element={   <ProtectedRoute>     <Promotion />   </ProtectedRoute> }/>
         <Route path="/course-levels"element={  <ProtectedRoute>    <CourseLevels />  </ProtectedRoute>}/>
+
+        <Route path="/invoicing" element={   <ProtectedRoute>     <InvoiceDocuments />   </ProtectedRoute> }/>
+
+        <Route path="/invoicing/add" element={   <ProtectedRoute>     <AddInvoiceDocument />   </ProtectedRoute> }/>
+        
+        <Route path="/invoicing/edit/:id" element={   <ProtectedRoute>     <AddInvoiceDocument />   </ProtectedRoute> }/>
+
+        
 
         
 

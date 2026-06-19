@@ -1,5 +1,14 @@
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from django.utils import timezone
+from weasyprint import HTML
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+from rest_framework.response import Response
 
 from .models import Product 
 from .serializers import ProductSerializer
@@ -395,3 +404,83 @@ class VendorReplacementView(APIView):
 
         return Response(data)
 
+
+
+# inventory/views.py - Add these imports at the top
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from weasyprint import HTML
+from django.shortcuts import get_object_or_404
+
+# Add these functions at the end of inventory/views.py
+# inventory/views.py
+
+def generate_po_pdf(request, pk):
+    """
+    Generate PDF for Purchase Order using WeasyPrint
+    """
+    po = get_object_or_404(PurchaseOrder, pk=pk)
+    
+    # Company details (your company)
+    company_details = {
+        'name': 'HAVMORE CORP',
+        'address': 'B-315, Kalpataru Plaza, Bhawani Peth, Ramoshi Gate, PUNE - 411042',
+        'email': 'flyingcolorshq@gmail.com',
+        'contact': '93702 60311 / 7507029290',
+        'gst': '27AAHFH9767Q1Z9'
+    }
+    
+    # Prepare context for template
+    context = {
+        'po': po,
+        'company': company_details,
+        'vendor': po.vendor,
+        'items': po.items.all(),
+        'current_date': timezone.now().strftime('%d/%m/%Y'),
+    }
+    
+    # Render HTML template - Use just 'po_pdf.html' since it's directly in templates folder
+    html_string = render_to_string('po_pdf.html', context)
+    
+    # Create PDF response
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="PO_{po.po_number}.pdf"'
+    
+    # Generate PDF
+    HTML(string=html_string).write_pdf(response)
+    
+    return response
+
+
+def download_po_pdf(request, pk):
+    """
+    Download PDF for Purchase Order
+    """
+    po = get_object_or_404(PurchaseOrder, pk=pk)
+    
+    # Company details
+    company_details = {
+        'name': 'HAVMORE CORP',
+        'address': 'B-315, Kalpataru Plaza, Bhawani Peth, Ramoshi Gate, PUNE - 411042',
+        'email': 'flyingcolorshq@gmail.com',
+        'contact': '93702 60311 / 7507029290',
+        'gst': '27AAHFH9767Q1Z9'
+    }
+    
+    context = {
+        'po': po,
+        'company': company_details,
+        'vendor': po.vendor,
+        'items': po.items.all(),
+        'current_date': timezone.now().strftime('%d/%m/%Y'),
+    }
+    
+    # Render HTML template - Use just 'po_pdf.html'
+    html_string = render_to_string('po_pdf.html', context)
+    
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="PO_{po.po_number}.pdf"'
+    
+    HTML(string=html_string).write_pdf(response)
+    
+    return response

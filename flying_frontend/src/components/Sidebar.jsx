@@ -183,16 +183,34 @@ export default function Sidebar({ children }) {
                 </div>
 
                 {billingOpen && sidebarOpen && (
-                  <Link
-                    to="/billing"
-                    style={{
-                      ...styles.subLink,
-                      background: location.pathname.startsWith("/billing") ? "#2b2b40" : "transparent"
-                    }}
-                  >
-                    • Parent Purchase
-                  </Link>
-                )}
+  <>
+    <Link
+      to="/billing"
+      style={{
+        ...styles.subLink,
+        background:
+          location.pathname === "/billing"
+            ? "#2b2b40"
+            : "transparent"
+      }}
+    >
+      • Parent Purchase
+    </Link>
+
+    <Link
+      to="/invoicing"
+      style={{
+        ...styles.subLink,
+        background:
+          location.pathname.startsWith("/invoicing")
+            ? "#2b2b40"
+            : "transparent"
+      }}
+    >
+      • Invoicing
+    </Link>
+  </>
+)}
               </div>
 
               {/* REPORTS */}
