@@ -33,6 +33,18 @@ import Promotion from "./pages/students/Promotion";
 import InvoiceDocuments from "./pages/billing/InvoiceDocuments";
 import AddInvoiceDocument from "./pages/billing/AddInvoiceDocument";
 
+import MembershipPlans from "./pages/daycare/membership/MembershipPlans";
+
+import Companies from "./pages/daycare/company/Companies";
+import AddCompany from "./pages/daycare/company/AddCompany";
+
+
+import Services from "./pages/daycare/service/Services";
+import AddService from "./pages/daycare/service/AddService";
+
+import DaycareStudents from "./pages/daycare/student/DaycareStudents";
+import AddDaycareStudent from "./pages/daycare/student/AddDaycareStudent";
+
 function App() {
   return (
     <BrowserRouter>
@@ -100,6 +112,27 @@ function App() {
         <Route path="/invoicing/add" element={   <ProtectedRoute>     <AddInvoiceDocument />   </ProtectedRoute> }/>
         
         <Route path="/invoicing/edit/:id" element={   <ProtectedRoute>     <AddInvoiceDocument />   </ProtectedRoute> }/>
+
+        {/* DAYCARE */}
+
+        <Route path="/membership-plans" element={   <ProtectedRoute>     <MembershipPlans />   </ProtectedRoute> }/>
+
+
+        <Route path="/companies" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
+
+        <Route path="/companies/add" element={<ProtectedRoute><AddCompany /></ProtectedRoute>} />
+        
+        <Route path="/companies/edit/:id" element={<ProtectedRoute><AddCompany /></ProtectedRoute>} />
+
+        <Route path="/daycare-services" element={<ProtectedRoute><Services /></ProtectedRoute>}/>
+
+        <Route path="/daycare-services/add" element={<ProtectedRoute><AddService /></ProtectedRoute>}/>
+        
+        <Route path="/daycare-services/edit/:id" element={<ProtectedRoute><AddService /></ProtectedRoute>}/>
+        
+        <Route path="/daycare-students" element={<ProtectedRoute><DaycareStudents /></ProtectedRoute>}/>
+        
+        <Route path="/daycare-students/add"  element={<ProtectedRoute><AddDaycareStudent /></ProtectedRoute>}/>
 
         
 

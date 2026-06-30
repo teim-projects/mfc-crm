@@ -11,7 +11,19 @@ export default function Sidebar({ children }) {
     typeof window !== "undefined" ? window.innerWidth : 1200
   );
   const [sidebarOpen, setSidebarOpen] = useState(windowWidth > 768);
-  const [billingOpen, setBillingOpen] = useState(location.pathname.startsWith("/billing"));
+  const [billingOpen, setBillingOpen] = useState(
+    location.pathname.startsWith("/billing") || location.pathname.startsWith("/invoicing")
+  );
+
+  // Global App Mode ('flying-colours' or 'daycare')
+  const [appMode, setAppMode] = useState(() => {
+    const daycarePaths = ["/membership-plans", "/daycare-students", "/companies"];
+    return daycarePaths.some(path => window.location.pathname.startsWith(path)) 
+      ? "daycare" 
+      : "flying-colours";
+  });
+
+  const [navDropdownOpen, setNavDropdownOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -32,9 +44,7 @@ export default function Sidebar({ children }) {
     navigate("/");
   };
 
-  const isActive = (path) => {
-    return location.pathname.startsWith(path);
-  };
+  const isActive = (path) => location.pathname.startsWith(path);
 
   const getLinkStyle = (path) => {
     const active = isActive(path);
@@ -47,17 +57,31 @@ export default function Sidebar({ children }) {
 
   const isMobile = windowWidth <= 768;
 
+  const currentBranding = {
+    "flying-colours": {
+      title: "My Flying Colours",
+      tagline: "Mastering Calculations",
+      icon: "🎨"
+    },
+    "daycare": {
+      title: "DayCare",
+      tagline: "Nurturing Growth",
+      icon: "🧸"
+    }
+  }[appMode];
+
   return (
     <div style={styles.layout}>
       {/* =====================================
-          TOPBAR
+          TOPBAR WITH DROPDOWN SWITCHER
       ===================================== */}
       <div style={styles.topbar}>
-        {/* LEFT */}
+        {/* LEFT BRANDING & SELECTION DROPDOWN */}
         <div
           style={{
             ...styles.logoSection,
             width: sidebarOpen ? "250px" : "72px",
+            position: "relative",
           }}
         >
           <button
@@ -68,23 +92,70 @@ export default function Sidebar({ children }) {
           </button>
 
           {sidebarOpen && (
-            <h2 style={styles.logoText}>My Flying Colours</h2>
+            <div 
+              style={styles.dropdownTrigger}
+              onClick={() => setNavDropdownOpen(!navDropdownOpen)}
+            >
+              <h2 style={styles.logoText}>
+                {currentBranding.title} <span style={{ fontSize: "10px", marginLeft: "4px" }}>▼</span>
+              </h2>
+
+              {/* FLOATING NAVBAR DROPDOWN CONTEXT MENU */}
+              {navDropdownOpen && (
+                <div style={styles.dropdownMenu}>
+                  <div 
+                    style={{
+                      ...styles.dropdownItem,
+                      background: appMode === "flying-colours" ? "rgba(96,128,232,0.15)" : "transparent",
+                      color: appMode === "flying-colours" ? "#6080E8" : "#ffffff"
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setAppMode("flying-colours");
+                      setNavDropdownOpen(false);
+                      navigate("/dashboard");
+                    }}
+                  >
+                    <span>🎨</span> My Flying Colours
+                  </div>
+                  <div 
+                    style={{
+                      ...styles.dropdownItem,
+                      background: appMode === "daycare" ? "rgba(96,128,232,0.15)" : "transparent",
+                      color: appMode === "daycare" ? "#6080E8" : "#ffffff"
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setAppMode("daycare");
+                      setNavDropdownOpen(false);
+                      navigate("/companies"); // Changed default landing to companies
+                    }}
+                  >
+                    <span>🧸</span> DayCare
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
-        {/* CENTER BRANDING SECTION - AUTO HIDES ON MOBILE VIEWS */}
+        {/* CENTER BRANDING SECTION */}
         <div style={{
           ...styles.artSection,
           display: isMobile ? "none" : "flex"
         }}>
-          <div style={styles.abacusIcon}>
-            <div style={styles.abacusWire}></div>
-            <div style={styles.bead}></div>
-            <div style={styles.bead}></div>
-            <div style={{ ...styles.bead, bottom: '2px' }}></div>
-          </div>
+          {appMode === "flying-colours" ? (
+            <div style={styles.abacusIcon}>
+              <div style={styles.abacusWire}></div>
+              <div style={styles.bead}></div>
+              <div style={styles.bead}></div>
+              <div style={{ ...styles.bead, bottom: '2px' }}></div>
+            </div>
+          ) : (
+            <span style={{ fontSize: "18px" }}>🧸</span>
+          )}
           
-          <span style={styles.artText}>Mastering Calculations</span>
+          <span style={styles.artText}>{currentBranding.tagline}</span>
           
           <div style={styles.vedicSymbol}>
             <div style={styles.innerCircle}></div>
@@ -100,7 +171,7 @@ export default function Sidebar({ children }) {
       </div>
 
       {/* =====================================
-          BODY
+          BODY WITH SEPARATED SIDEBAR VIEWPORT
       ===================================== */}
       <div style={styles.body}>
         {/* SIDEBAR */}
@@ -110,114 +181,127 @@ export default function Sidebar({ children }) {
             width: sidebarOpen ? "250px" : "72px",
           }}
         >
-          {/* SCROLLABLE MENU WRAPPER */}
+          {/* SCROLLABLE ROUTE ACTIONS */}
           <div style={styles.menuScrollContainer}>
             <div style={styles.menu}>
-              {/* DASHBOARD */}
-              <Link to="/dashboard" style={getLinkStyle("/dashboard")}>
-                <span style={styles.iconStyle}>📊</span>
-                {sidebarOpen && "Dashboard"}
-              </Link>
 
-              {/* STAFF */}
-              <Link to="/staff" style={getLinkStyle("/staff")}>
-                <span style={styles.iconStyle}>👥</span>
-                {sidebarOpen && "Staff"}
-              </Link>
+              {/* =====================================
+                  CONDITIONALLY RENDERED SIDEBAR VIEWPORTS
+              ===================================== */}
+              {appMode === "flying-colours" ? (
+                <>
+                  <Link to="/dashboard" style={getLinkStyle("/dashboard")}>
+                    <span style={styles.iconStyle}>📊</span>
+                    {sidebarOpen && "Dashboard"}
+                  </Link>
 
-              {/* SCHOOLS */}
-              <Link to="/schools" style={getLinkStyle("/schools")}>
-                <span style={styles.iconStyle}>🏫</span>
-                {sidebarOpen && "Schools"}
-              </Link>
+                  <Link to="/staff" style={getLinkStyle("/staff")}>
+                    <span style={styles.iconStyle}>👥</span>
+                    {sidebarOpen && "Staff"}
+                  </Link>
 
-              {/* STUDENTS */}
-              <Link to="/allstudents" style={getLinkStyle("/allstudents")}>
-                <span style={styles.iconStyle}>🎓</span>
-                {sidebarOpen && "Students"}
-              </Link>
+                  <Link to="/schools" style={getLinkStyle("/schools")}>
+                    <span style={styles.iconStyle}>🏫</span>
+                    {sidebarOpen && "Schools"}
+                  </Link>
 
-              {/* PROMOTIONS */}
-              <Link to="/promotions" style={getLinkStyle("/promotions")}>
-                <span style={styles.iconStyle}>📢</span>
-                {sidebarOpen && "Promote"}
-              </Link>
+                  <Link to="/allstudents" style={getLinkStyle("/allstudents")}>
+                    <span style={styles.iconStyle}>🎓</span>
+                    {sidebarOpen && "Students"}
+                  </Link>
 
-              {/* COURSES */}
-              <Link to="/courses" style={getLinkStyle("/courses")}>
-                <span style={styles.iconStyle}>📚</span>
-                {sidebarOpen && "Courses"}
-              </Link>
+                  <Link to="/promotions" style={getLinkStyle("/promotions")}>
+                    <span style={styles.iconStyle}>📢</span>
+                    {sidebarOpen && "Promote"}
+                  </Link>
 
-              {/* PRODUCTS */}
-              <Link to="/products" style={getLinkStyle("/products")}>
-                <span style={styles.iconStyle}>📦</span>
-                {sidebarOpen && "Products"}
-              </Link>
+                  <Link to="/courses" style={getLinkStyle("/courses")}>
+                    <span style={styles.iconStyle}>📚</span>
+                    {sidebarOpen && "Courses"}
+                  </Link>
 
-              {/* INVENTORY */}
-              <Link to="/inventory" style={getLinkStyle("/inventory")}>
-                <span style={styles.iconStyle}>📋</span>
-                {sidebarOpen && "Inventory"}
-              </Link>
+                  <Link to="/products" style={getLinkStyle("/products")}>
+                    <span style={styles.iconStyle}>📦</span>
+                    {sidebarOpen && "Products"}
+                  </Link>
 
-              {/* BILLING */}
-              <div>
-                <div
-                  onClick={() => setBillingOpen(!billingOpen)}
-                  style={
-                    sidebarOpen 
-                      ? (isActive("/billing") ? styles.activeLinkOpen : styles.linkOpen)
-                      : (isActive("/billing") ? styles.activeLinkClosed : styles.linkClosed)
-                  }
-                >
-                  <span style={styles.iconStyle}>💳</span>
-                  {sidebarOpen && (
-                    <>
-                      <span>Billing</span>
-                      <span style={{ marginLeft: "auto", fontSize: "11px" }}>
-                        {billingOpen ? "▼" : "▶"}
-                      </span>
-                    </>
-                  )}
-                </div>
+                  <Link to="/inventory" style={getLinkStyle("/inventory")}>
+                    <span style={styles.iconStyle}>📋</span>
+                    {sidebarOpen && "Inventory"}
+                  </Link>
 
-                {billingOpen && sidebarOpen && (
-  <>
-    <Link
-      to="/billing"
-      style={{
-        ...styles.subLink,
-        background:
-          location.pathname === "/billing"
-            ? "#2b2b40"
-            : "transparent"
-      }}
-    >
-      • Parent Purchase
-    </Link>
+                  <div>
+                    <div
+                      onClick={() => setBillingOpen(!billingOpen)}
+                      style={
+                        sidebarOpen 
+                          ? (isActive("/billing") || isActive("/invoicing") ? styles.activeLinkOpen : styles.linkOpen)
+                          : (isActive("/billing") || isActive("/invoicing") ? styles.activeLinkClosed : styles.linkClosed)
+                      }
+                    >
+                      <span style={styles.iconStyle}>💳</span>
+                      {sidebarOpen && (
+                        <>
+                          <span>Billing</span>
+                          <span style={{ marginLeft: "auto", fontSize: "11px" }}>
+                            {billingOpen ? "▼" : "▶"}
+                          </span>
+                        </>
+                      )}
+                    </div>
 
-    <Link
-      to="/invoicing"
-      style={{
-        ...styles.subLink,
-        background:
-          location.pathname.startsWith("/invoicing")
-            ? "#2b2b40"
-            : "transparent"
-      }}
-    >
-      • Invoicing
-    </Link>
-  </>
-)}
-              </div>
+                    {billingOpen && sidebarOpen && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginTop: "4px" }}>
+                        <Link
+                          to="/billing"
+                          style={{
+                            ...styles.subLink,
+                            background: location.pathname === "/billing" ? "#2b2b40" : "transparent"
+                          }}
+                        >
+                          • Parent Purchase
+                        </Link>
 
-              {/* REPORTS */}
-              <Link to="/reports" style={getLinkStyle("/reports")}>
-                <span style={styles.iconStyle}>📉</span>
-                {sidebarOpen && "Reports"}
-              </Link>
+                        <Link
+                          to="/invoicing"
+                          style={{
+                            ...styles.subLink,
+                            background: location.pathname.startsWith("/invoicing") ? "#2b2b40" : "transparent"
+                          }}
+                        >
+                          • Invoicing
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+
+                  <Link to="/reports" style={getLinkStyle("/reports")}>
+                    <span style={styles.iconStyle}>📉</span>
+                    {sidebarOpen && "Reports"}
+                  </Link>
+                </>
+              ) : (
+                <>
+                  {/* DAYCARE MODULE FIELDS (Membership comment out, Companies first, then D-Students) */}
+                  {/* 
+                  <Link to="/membership-plans" style={getLinkStyle("/membership-plans")}>
+                    <span style={styles.iconStyle}>🍼</span>
+                    {sidebarOpen && "Membership Plans"}
+                  </Link> 
+                  */}
+
+                  <Link to="/companies" style={getLinkStyle("/companies")}>
+                    <span style={styles.iconStyle}>🏢</span>
+                    {sidebarOpen && "Companies"}
+                  </Link>
+
+                  <Link to="/daycare-students" style={getLinkStyle("/daycare-students")}>
+                    <span style={styles.iconStyle}>👶</span>
+                    {sidebarOpen && "D-Students"}
+                  </Link>
+                </>
+              )}
+
             </div>
           </div>
 
@@ -239,6 +323,36 @@ export default function Sidebar({ children }) {
 }
 
 const styles = {
+  dropdownTrigger: {
+    display: "flex",
+    alignItems: "center",
+    cursor: "pointer",
+    height: "100%",
+    userSelect: "none"
+  },
+  dropdownMenu: {
+    position: "absolute",
+    top: "64px",
+    left: "15px",
+    background: "#1E1E2D",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
+    borderRadius: "10px",
+    width: "220px",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
+    zIndex: 1000,
+    overflow: "hidden",
+    padding: "6px 0"
+  },
+  dropdownItem: {
+    padding: "12px 16px",
+    fontSize: "14px",
+    fontWeight: "600",
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    transition: "background 0.2s ease, color 0.2s ease",
+    cursor: "pointer"
+  },
   subLink: {
     color: "#cbd5e1",
     textDecoration: "none",
@@ -246,7 +360,6 @@ const styles = {
     borderRadius: "8px",
     fontSize: "14px",
     display: "block",
-    marginTop: "4px",
     transition: "background 0.2s ease",
   },
   themeToggleBtn: {
@@ -329,13 +442,11 @@ const styles = {
     gap: "15px",
     padding: "0 20px",
     transition: "all 0.3s ease",
-    overflow: "hidden",
+    overflow: "visible", 
     flexShrink: 0,
-    // borderBottom: "1px solid #e2e8f0", 
-    // boxSizing: "border-box"
   },
   menuButton: { background: "transparent", border: "none", color: "#ffffff", fontSize: "26px", cursor: "pointer", minWidth: "30px" },
-  logoText: { color: "#ffffff", fontSize: "1.2rem", fontWeight: "750", letterSpacing: "0.5px", whiteSpace: "nowrap" },
+  logoText: { color: "#ffffff", fontSize: "1.15rem", fontWeight: "750", letterSpacing: "0.5px", whiteSpace: "nowrap", display: "flex", alignItems: "center" },
 
   sidebar: {
     background: "#1E1E2D", 
@@ -357,7 +468,7 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: "8px",
-    padding: "20px 12px",
+    padding: "10px 12px 20px 12px", // Tightened the top padding to pull items upward cleanly
   },
   linkOpen: {
     color: "rgba(255,255,255,0.75)", textDecoration: "none", padding: "12px 16px", borderRadius: "10px",
