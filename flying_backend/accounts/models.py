@@ -41,6 +41,18 @@ class User(AbstractUser):
         null=True
     )
 
+    date_of_birth = models.DateField(
+        blank=True,
+        null=True
+    )
+
+    # NEW
+    qualification = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True
+    )
+
     joining_date = models.DateField(
         blank=True,
         null=True

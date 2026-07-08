@@ -14,6 +14,8 @@ export default function AddStaff({ isOpen, id, onClose, onSuccess }) {
     mobile_number: "",
     spouse_number: "",
     email_id: "",
+    qualification: "",
+    date_of_birth: "",
     joining_date: "",
     salary: ""
   });
@@ -45,6 +47,8 @@ export default function AddStaff({ isOpen, id, onClose, onSuccess }) {
         mobile_number: "",
         spouse_number: "",
         email_id: "",
+        qualification: "",
+        date_of_birth: "",
         joining_date: "",
         salary: "",
       });
@@ -62,6 +66,8 @@ export default function AddStaff({ isOpen, id, onClose, onSuccess }) {
         mobile_number: res.data.mobile_number || "",
         spouse_number: res.data.spouse_number || "",
         email_id: res.data.email_id || "",
+        qualification: res.data.qualification || "",
+        date_of_birth: res.data.date_of_birth || "",
         joining_date: res.data.joining_date || "",
         salary: res.data.salary || "",
       });
@@ -197,8 +203,41 @@ export default function AddStaff({ isOpen, id, onClose, onSuccess }) {
               />
             </div>
 
+
+
             <div style={styles.inputGroup}>
-              <label style={styles.label}>Gate Joining Date</label>
+  <label style={styles.label}>Date of Birth</label>
+  <input
+    type="date"
+    style={styles.input}
+    value={form.date_of_birth}
+    onChange={(e) =>
+      setForm({
+        ...form,
+        date_of_birth: e.target.value,
+      })
+    }
+  />
+</div>
+
+            <div style={styles.inputGroup}>
+  <label style={styles.label}>Qualification</label>
+  <input
+    type="text"
+    style={styles.input}
+    placeholder="B.Sc, B.Com, MBA, MCA..."
+    value={form.qualification}
+    onChange={(e) =>
+      setForm({
+        ...form,
+        qualification: e.target.value,
+      })
+    }
+  />
+</div>
+
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Date of Joining</label>
               <input
                 type="date"
                 style={styles.input}

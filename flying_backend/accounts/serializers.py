@@ -32,6 +32,9 @@ class UserSerializer(serializers.ModelSerializer):
             'mobile_number',
             'spouse_number',
             'email_id',
+
+            'date_of_birth',
+            'qualification',
             'joining_date',
             'salary',
         
@@ -68,6 +71,10 @@ class UserSerializer(serializers.ModelSerializer):
             email_id=validated_data.get(
                 'email_id'
             ),
+
+            date_of_birth=validated_data.get('date_of_birth'),
+
+            qualification=validated_data.get('qualification'),
     
             joining_date=validated_data.get(
                 'joining_date'
