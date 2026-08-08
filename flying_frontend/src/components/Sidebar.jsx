@@ -299,6 +299,11 @@ export default function Sidebar({ children }) {
                     <span style={styles.iconStyle}>👶</span>
                     {sidebarOpen && "D-Students"}
                   </Link>
+
+                  <Link to="/reports" style={getLinkStyle("/reports")}>
+                    <span style={styles.iconStyle}>📉</span>
+                    {sidebarOpen && "Reports"}
+                  </Link>
                 </>
               )}
 
@@ -314,7 +319,14 @@ export default function Sidebar({ children }) {
         </div>
 
         {/* PAGE CONTENT */}
-        <div style={styles.content}>
+        <style>{`
+          @media (max-width: 768px) {
+            .sidebar-content-wrapper {
+              padding: 12px !important;
+            }
+          }
+        `}</style>
+        <div style={styles.content} className="sidebar-content-wrapper">
           {children}
         </div>
       </div>

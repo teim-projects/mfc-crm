@@ -29,7 +29,12 @@ from .views import (
     CourseLevelDeleteView,
 )
 
+from .reports_api import ReportsSummaryAPIView
+
 urlpatterns = [
+
+    # REPORTS ANALYTICS
+    path('reports/summary/', ReportsSummaryAPIView.as_view(), name='reports-summary'),
 
     # CREATE
     path('schools/create/', SchoolCreateView.as_view()),

@@ -44,6 +44,7 @@ import AddService from "./pages/daycare/service/AddService";
 
 import DaycareStudents from "./pages/daycare/student/DaycareStudents";
 import AddDaycareStudent from "./pages/daycare/student/AddDaycareStudent";
+import Reports from "./pages/reports/Reports";
 
 function App() {
   return (
@@ -133,6 +134,7 @@ function App() {
         <Route path="/daycare-students" element={<ProtectedRoute><DaycareStudents /></ProtectedRoute>}/>
         
         <Route path="/daycare-students/add"  element={<ProtectedRoute><AddDaycareStudent /></ProtectedRoute>}/>
+        <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>}/>
 
         
 
